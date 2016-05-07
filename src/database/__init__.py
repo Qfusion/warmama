@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python2.7`
 #-*- coding:utf-8 -*-
 
 """
@@ -24,6 +24,8 @@ import atexit
 
 import inspect
 import types
+
+import re
 
 ###################
 #
@@ -71,6 +73,10 @@ class DatabaseHandler(object):
 		connection.autocommit(True)
 		self.connection = connection
 		return self.connection != None
+		
+	def ping(self):
+		if( self.connection ) :
+			self.connection.ping(True)
 		
 	def close(self):
 		if( self.connection ) :
@@ -402,7 +408,7 @@ class DatabaseHandler(object):
 	Servers already exist in the database so we are only updating
 	information
 	fields are ( server.uuid, server.login, server.regip, server.regipv6, server.hostname,
-				server.ip, server.ipv6, server.location, server.banned )
+				server.ip, server.ipv6, server.location, server.banned, server.demo_baseurl, server.email )
 	'''
 	def SaveServer(self, cursor, fields):
 		query = '''
@@ -430,18 +436,18 @@ class DatabaseHandler(object):
 			# new player
 			query = '''
 				INSERT INTO %s
-				(created, updated, login, nickname, ip, ipv6,location, banned)
-				VALUES( NOW(), NOW(), %%s, %%s, %%s, %%s, %%s, %%s )
+				(created, updated, login, nickname, ip, ipv6,location, banned, steam_id)
+				VALUES( NOW(), NOW(), %%s, %%s, %%s, %%s, %%s, %%s, %%s )
 				''' % table_Players.tablename
-			values = ( fields[1], fields[2], fields[3], fields[4], fields[5], fields[6] )
+			values = ( fields[1], fields[2], fields[3], fields[4], fields[5], fields[6], fields[7] )
 		else :
 			# existing player
 			query = '''
 				UPDATE %s
-				SET nickname=%%s, ip=%%s, ipv6=%%s, location=%%s
+				SET nickname=%%s, ip=%%s, ipv6=%%s, location=%%s, banned=%%s, steam_id=%%s
 				WHERE id=%%s
 				''' % table_Players.tablename
-			values = ( fields[2], fields[3], fields[4], fields[5], fields[0] )
+			values = ( fields[2], fields[3], fields[4], fields[5], fields[6], fields[7], fields[0] )
 			
 		cursor.execute( query, values )
 		if( fields[0] == 0 ) :
@@ -459,7 +465,7 @@ class DatabaseHandler(object):
 	####################################
 	
 	# user logins are intermediate handles to login-process
-	def SaveUserLogin(self, cursor, handle, login, ready, valid, profile_url, profile_url_rml ):
+	def SaveUserLogin(self, cursor, handle, login, ready, valid, profile_url, profile_url_rml, steam_id = None, steam_ticket = None):
 		if( handle != 0 ) :
 			# make an update
 			query = '''
@@ -470,10 +476,10 @@ class DatabaseHandler(object):
 		else :
 			# insert new
 			query = '''
-				INSERT INTO %s ( created, login, ready, valid )
-				VALUES( NOW(), %%s, %%s, %%s )
+				INSERT INTO %s ( created, login, ready, valid, steam_id, steam_ticket )
+				VALUES( NOW(), %%s, %%s, %%s, %%s, %%s )
 				''' % table_LoginPlayer.tablename
-			values = ( login, ready, valid )
+			values = ( login, ready, valid, steam_id, steam_ticket )
 			cursor.execute( query, values )
 			cursor.execute( 'SELECT LAST_INSERT_ID()' )
 			r = cursor.fetchone()
@@ -490,7 +496,7 @@ class DatabaseHandler(object):
 	# returns (ready, valid, login)		
 	def GetUserLogin(self, cursor, handle):
 		query = '''
-			SELECT ready, valid, login, profile_url, profile_url_rml FROM %s
+			SELECT ready, valid, login, profile_url, profile_url_rml, steam_id, steam_ticket FROM %s
 			WHERE id=%%s
 			''' % table_LoginPlayer.tablename
 		values = ( handle, )
@@ -501,7 +507,7 @@ class DatabaseHandler(object):
 			return r
 		
 		# error
-		return (1, 0, '', '', '')
+		return (1, 0, '', '', '', '', '')
 	
 	def RemoveUserLogin(self, cursor, handle):
 		cursor.execute( '''
@@ -578,7 +584,7 @@ class DatabaseHandler(object):
 		query_insert = '''
 			INSERT INTO %s
 			(created, updated, player_id, gametype_id, wins, losses, quits, rating, deviation)
-			VALUES( NOW(), NOW(), %%s, %%s, %%s, %%s, %%s, %%s, %%s )
+			VALUES( NOW(), NOW(), %%s, %%s, %%s, %%s, %%s, %%s, %%s)
 			''' % table_PlayerStats.tablename
 		
 		query_update = '''
@@ -586,6 +592,10 @@ class DatabaseHandler(object):
 			updated=NOW(), wins=%%s, losses=%%s, quits=%%s, rating=%%s, deviation=%%s
 			WHERE id=%%s
 			''' % table_PlayerStats.tablename
+		
+		query_steam_dirty_update = '''
+			UPDATE %s SET steam_dirty=1 WHERE id=%%s
+		''' % table_Players.tablename
 		
 		for uuid, fields in stats.iteritems() :
 			if( uuid == 0 ) :
@@ -602,6 +612,8 @@ class DatabaseHandler(object):
 						round(fields[5]*1000.0, 2), fields[0] )
 				
 			cursor.execute( query, values )
+			
+			cursor.execute( query_steam_dirty_update, ( uuid, ) )
 			
 		self.connection.commit()
 
@@ -620,7 +632,7 @@ class DatabaseHandler(object):
 			AND mp.matchresult_id = mr.id
 			AND mr.gametype_id = %%s
 			ORDER BY mr.utctime DESC
-			LIMIT 1;
+			LIMIT 1
 			''' % { 'mp' : table_MatchPlayers.tablename,
 					'mr' : table_MatchResults.tablename
 					}
@@ -632,7 +644,7 @@ class DatabaseHandler(object):
 			AND mp.matchresult_id = mr.id
 			AND mr.gametype_id = %%s
 			ORDER BY mr.utctime DESC
-			LIMIT 1;
+			LIMIT 1
 			''' % { 'mp' : table_MatchPlayers.tablename,
 					'mr' : table_MatchResults.tablename
 					}
@@ -693,6 +705,21 @@ class DatabaseHandler(object):
 		login = ''
 		query = 'SELECT login FROM %s WHERE id=%%s' % table_Players.tablename
 		values = ( uuid, )
+		
+		cursor.execute( query, values )
+		r = cursor.fetchone()
+		if( r ) :
+			login = r[0]
+			
+		return login
+
+	'''
+	LoadUserLoginBySteamID
+	'''
+	def LoadUserLoginBySteamID(self, cursor, steam_id):
+		login = ''
+		query = 'SELECT login FROM %s WHERE steam_id=%%s' % table_Players.tablename
+		values = ( steam_id, )
 		
 		cursor.execute( query, values )
 		r = cursor.fetchone()
@@ -920,7 +947,6 @@ class DatabaseHandler(object):
 		
 		return gametypeId
 	
-	
 	"""
 	AddMatch
 	Saves the whole Match structure to database
@@ -1082,6 +1108,117 @@ class DatabaseHandler(object):
 
 	####################################
 	#
+	# STEAM
+	#
+	####################################
+	def GetStubSteamLogin(self, cursor, steam_id):
+		return 'steam_%d' % ( steam_id )
+
+	def GetDirtySteamPlayers(self, cursor):
+		return table_Players.table.GetDirtySteamPlayers(cursor, 50)
+
+	def GetSteamStatsForPlayer(self, cursor, player):
+		# aggregated stats
+		query="""
+			SELECT tx.*, l.steam_leaderboard_id FROM
+			(
+			SELECT 
+			steam_id,
+			IF(stat_name='matches_won', sum_wins,
+			 IF(stat_name='matches_lost', sum_losses,
+			  IF(stat_name='matches_played', sum_played,
+			   NULL
+			  )
+			 )
+			) AS stat_value
+			FROM (
+
+			# stats per gametype
+			SELECT * FROM (
+			SELECT ps.*, ss.name AS stat_name, ss.steam_id FROM (
+			SELECT ps.gametype_id, SUM(ps.wins) AS sum_wins, SUM(ps.losses) AS sum_losses, SUM(ps.wins)+SUM(ps.losses) AS sum_played
+			FROM %s ps
+			WHERE ps.player_id=%%s
+			GROUP BY 1
+			) ps
+			INNER JOIN %s ss ON (ss.gametype_id=ps.gametype_id)
+			) t
+
+			UNION ALL
+
+			# stats for all matches
+			SELECT ps.*, ss.name AS stat_name, ss.steam_id FROM (
+			SELECT NULL, SUM(ps.wins) AS sum_wins, SUM(ps.losses) AS sum_losses, SUM(ps.wins)+SUM(ps.losses) AS sum_played
+			FROM %s ps
+			WHERE ps.player_id=%%s
+			GROUP BY ps.player_id
+			) ps
+			INNER JOIN %s ss ON (ss.gametype_id IS NULL)
+
+			) t
+
+			UNION ALL
+
+			# individual awards
+			SELECT a.steam_id, COUNT(*)
+			FROM %s ma
+			INNER JOIN %s a ON (a.id=ma.award_id)
+			WHERE ma.player_id=%%s AND a.steam_id IS NOT NULL
+			GROUP BY 1
+			
+			UNION ALL
+
+			# weapon usage
+			SELECT sws.steam_id, CEIL(SUM(dmg_strong * 100)/@total) AS `value`
+			FROM
+			(SELECT weapon_id, dmg_strong, @total := @total + dmg_strong 
+			 FROM %s
+			 INNER JOIN (SELECT @total := 0) t
+			 WHERE player_id=%%s AND @total < 500000
+			 ORDER BY id DESC
+			 ) t
+			 INNER JOIN %s w ON (w.id=weapon_id)
+			 INNER JOIN %s sws ON (sws.weapon_id=w.id AND sws.type='usage')
+			 GROUP BY t.weapon_id
+
+			 UNION ALL
+
+			 # accuracies
+			SELECT sws.steam_id, CEIL(AVG(acc_strong)) AS `value`
+			FROM
+			(
+			SELECT weapon_id, id, @total:=IF(@weapon_id=weapon_id,@total+1,1) AS row_number, @weapon_id:=weapon_id, acc_strong
+			FROM %s mw
+			INNER JOIN (SELECT @weapon_id:=0, @total:=0) t
+			WHERE player_id=%%s
+			ORDER BY weapon_id ASC, id DESC
+			) t
+			INNER JOIN %s w ON (w.id=weapon_id)
+			INNER JOIN %s sws ON (sws.weapon_id=w.id AND sws.type='accuracy')
+			WHERE row_number<=100
+			GROUP BY t.weapon_id
+			) tx
+			LEFT JOIN %s l ON (l.steam_stat_id = tx.steam_id)
+			""" % ( table_PlayerStats.tablename, table_SteamGametypeStats.tablename, 
+				table_PlayerStats.tablename, table_SteamGametypeStats.tablename, 
+				table_MatchAwards.tablename, table_Awards.tablename,
+				table_MatchWeapons.tablename, table_Weapons.tablename, table_SteamWeaponStats.tablename,
+				table_MatchWeapons.tablename, table_Weapons.tablename, table_SteamWeaponStats.tablename,
+				table_SteamLeaderboardStats.tablename);
+
+		cursor.execute(query, ( player, player, player, player, player ))
+		rows = cursor.fetchall()
+		awards = {}
+		if rows:
+			for row in rows:
+				awards[row[0]] = (row[1], row[2])
+		return awards
+
+	def GetSteamIDForPlayer(self, cursor, player):
+		return table_Players.table.GetSteamID(cursor,player)
+
+	####################################
+	#
 	#
 	#
 	####################################
@@ -1104,7 +1241,7 @@ class DatabaseHandler(object):
 						if( create_to_db ) :
 							newobj.Create (cursor, engine, charset)
 						self.tables[newobj.tablename] = newobj
-					self.wmm.log('CreateTables created %s %s' % (name, o.table))
+					#self.wmm.log('CreateTables created %s %s' % (name, o.table))
 			except TypeError as e:
 				self.wmm.log('CreateTables exception %s' % str(e))
 				pass
@@ -1121,53 +1258,46 @@ class DatabaseWrapper:
 		self.obj = DatabaseHandler(wmm, host, user, passwd, db, engine, charset)
 		self.lock = threading.Lock()
 		atexit.register(self._releaselock_)
-	
-	def _releaselock_(self):
-		self.lock.release()
 
-	def verifyconnection(self):
-		numtries = 10
-		while(numtries):
-			try:
-				cursor = self.obj.connection.cursor()
-				cursor.execute('select 1')
-				cursor.close()
-				return True
-			except:
-				# Re-establish the connection
-				self.obj.open()
-				numtries-=1
-		return False
+	def _releaselock_(self):
+		if self.lock.locked():
+			self.lock.release()
 
 	def __getattr__(self, name):
 		attr = getattr(self.obj, name)
 
 		def f(*args, **kwargs):
 			self.lock.acquire(True)
+
 			#self.obj.wmm.log('--> %s (%s %s) thread %d' % (name,
 			#	inspect.stack()[2][3], inspect.stack()[3][3],
 			#	threading.current_thread().ident))
-			cursor = None
-			r = None
-			if(not self.verifyconnection()):
-				self.obj.wmm.log('DatabaseWrapper failed to verify connection')
-				self.lock.release()
-				return
 
-			try:
-				cursor = self.obj.connection.cursor()
-				r = attr(cursor, *args, **kwargs)
-			except Exception as e:
-				self.obj.wmm.log('DatabaseWrapper exception (%s) %s' % (name, str(e)))
-			finally:
-				if(cursor != None):
-					cursor.close()
-				self.lock.release()
+			r = None
+			tryNum = 0
+
+			while tryNum < 10:
+			  try:
+				  cursor = None
+				  cursor = self.obj.connection.cursor()
+				  r = attr(cursor, *args, **kwargs)
+				  tryNum = 999
+			  except Exception as e:
+				  if tryNum == 0:
+					self.obj.ping()
+				  self.obj.wmm.log('DatabaseWrapper exception (%s) %s' % (name, str(e)))
+			  finally:
+				  tryNum += 1
+				  if cursor != None and cursor.description != None:
+					  cursor.close()
+				  self.lock.release()
+
 			return r
 
 		if(type(attr) == types.FunctionType or type(attr) == types.MethodType):
 			return f
 		else:
 			return attr
+
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python2
 #-*- coding:utf-8 -*-
 
 """
@@ -15,6 +15,7 @@ import database
 import session
 import session.login
 import game.match
+import steam
 
 import IPy as ipy
 import socket
@@ -28,6 +29,7 @@ import os
 import errno
 import re
 import urllib
+import urllib2
 
 import traceback
 
@@ -148,7 +150,7 @@ def makedir( dir ):
 ###################
 #
 # Classes
-		
+
 class Warmama(object):
 	
 	def __init__(self):
@@ -161,19 +163,18 @@ class Warmama(object):
 				
 			self.logFile = open( config.logfile_name, flag )
 
-		self.dbHandler = database.DatabaseWrapper(self,
-			config.db_host, 
-													config.db_user,
-													config.db_passwd,
-													config.db_name,
-													config.db_engine,
-													config.db_charset )
+		self.log("Initializing...")
+
+		self.dbHandler = database.DatabaseWrapper( self, 
+		    config.db_host, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
 		
 		self.sessionHandler = session.SessionHandler( self )
 		self.userHandler = session.users.UserHandler( self )
 		self.matchHandler = game.match.MatchHandler( self )
+		self.steamHandler = steam.SteamHandler( self )
 		
-			
+		self.log("Started successfully")
+
 	def gen_uuid(self, mask=0xffffffff):
 		return random.randint(0, mask)
 	
@@ -213,10 +214,10 @@ class Warmama(object):
 			s = self.sessionHandler.LoadSession(sid=sessionId, type=type)
 			# (TODO: use ipv4_ipv6 and match up with v4 OR v6)
 			if( s == None ) :
-				self.log( 'Heartbeat no session for %s @ %s' % (type, type))
+				self.log( 'Heartbeat no %s session for %s @ %s' % (type, ip, sessionId))
 				return '0'
 			if( s.ip != ip ) :
-				self.log( "Heartbeat from %s by %s invalid ip, should be %s" % (ip, type, s.ip))
+				self.log( "Heartbeat from %s by %s: invalid ip, should be %s @ %s" % (ip, type, s.ip, sessionId))
 				return '0'
 		
 			self.log( "Heartbeat from %s @ %s" % (type, ip) )
@@ -251,7 +252,7 @@ class Warmama(object):
 
 		_SV_JSON = True
 
-		try :	
+		try :
 			if( not self.ValidateAuthKey(authkey) ) :
 				self.log( "authkey not valid")
 				if(_SV_JSON):
@@ -633,7 +634,7 @@ class Warmama(object):
 
 			# (TODO: use ipv4_ipv6 and match up with v4 OR v6)
 			if( s.ip != ip ) :
-				self.log( "MatchUUID from %s: invalid ip, should be %s" % (ip, s.ip))
+				self.log( "MatchUUID from %s: invalid ip, should be %s @ %s" % (ip, s.ip, sessionId))
 				if(_SV_JSON):
 					return json.dumps({'uuid':''})
 				return ''
@@ -649,7 +650,7 @@ class Warmama(object):
 		except Exception as e:
 			self.log( "MatchUUID exception %s" % e)
 			if(_SV_JSON):
-				return json.dumps({'uuid':''})			
+				return json.dumps({'uuid':''})
 			return ''
 
 	##################################
@@ -667,6 +668,7 @@ class Warmama(object):
 		_CL_JSON = True
 	
 		try :
+			login = login.encode('ascii', 'ignore')
 			(ip, ipv6) = ipv4_ipv6( ip )
 			
 			self.log("Clientlogin %s %s %s %s" % ( login, handle, ip, ipv6 ) )
@@ -678,7 +680,7 @@ class Warmama(object):
 				
 				self.log( "Requesting login by handle %d" % handle )
 				
-				(ready, valid, login, profile_url, profile_url_rml) = self.dbHandler.GetUserLogin(handle)
+				(ready, valid, login, profile_url, profile_url_rml, steam_id, steam_ticket) = self.dbHandler.GetUserLogin(handle)
 				if( not ready ) :
 					self.log( "Not ready")
 					if(_CL_JSON):
@@ -696,7 +698,7 @@ class Warmama(object):
 					return '2 0'
 				
 				# now fetch the user
-				user = self.userHandler.LoadPlayer(login, ip, ipv6)
+				user = self.userHandler.LoadPlayer(login, ip, ipv6, steam_id)
 				
 				# we got real user so create a session for this one
 				s = self.sessionHandler.CreatePlayerSession( user.uuid, ip, ipv6 )
@@ -742,7 +744,8 @@ class Warmama(object):
 			#### STEP 1
 			
 			# we are on 1st step, start the login process
-			cl = session.login.ClientLogin( self, login, pw )
+			handle = self.dbHandler.SaveUserLogin( 0, login, 0, 0, None, None )
+			cl = session.login.ClientLogin( self, login, pw, handle )
 			self.log("Generated login handle %d" % cl.GetHandle() )
 			
 			if(_CL_JSON):
@@ -756,6 +759,29 @@ class Warmama(object):
 				return json.dumps({'ready':2, 'id':0});
 			return '2 0'
 	
+	def ClientLoginSteam( self, id, ticket, ip ):
+		self.log ( "ClientLoginSteam: %s %s %s" % ( id, int(id), ticket ) )
+
+		try :
+			id = int(id)
+			ticket_decoded = base64.urlsafe_b64decode( ticket.encode( 'ascii' ) )
+		except TypeError as err:
+			self.log( "ClientLoginSteam: base64 FAIL %s" % str(err) )
+			return '2 0'
+
+		# don't perform the call right now, wait until ClientAuthenticate
+		#if( self.steamHandler.ClientLogin( id, ticket_decoded ) != True ) :
+		#	return '2 0'
+		
+		try : 
+			# we are on 1st step, start the login process
+			cl = session.login.ClientLoginSteam( self, id, ticket_decoded )
+			self.log("Generated steam login handle %d" % cl.GetHandle() )
+			return json.dumps({'ready':-1, 'handle':cl.GetHandle(),'id':0});
+		except Exception as e :
+			self.log( "ClientLoginSteam exception %s" % e)
+			self.log( "Traceback: %s" % traceback.format_exc())
+			return json.dumps({'ready':2, 'id':0});
 	
 	def ClientLogout(self, csession, ip):
 		# TODO: if client is on a server, i.e. will have his result coming
@@ -868,10 +894,18 @@ class Warmama(object):
 			return '0'
 
 	# AUTH response from auth server
-	def ClientAuthenticate(self, handle, secret, valid, profile_url, profile_url_rml):
+	def ClientAuthenticate(self, handle, secret, valid, profile_url, profile_url_rml, steam_id):
 		# TODO: validate handle and secret
 		try :
-			self.log( "ClientAuthenticate %s %s %s %s" % (handle, secret, valid, profile_url))
+			self.log( "ClientAuthenticate %s %s %s %s %s" % (handle, secret, valid, profile_url, steam_id))
+
+			# authenticate steam id again
+			if steam_id != '' :
+				(h_ready, h_valid, h_login, h_profile_url, h_profile_url_rml, h_steam_id, steam_ticket) = self.dbHandler.GetUserLogin(handle)
+				if( h_steam_id != steam_id ) :
+					return ''
+				if( self.steamHandler.ClientLogin( steam_id, steam_ticket ) != True ) :
+					return ''
 
 			# parameters: handle, login(not saved), ready, valid
 			self.dbHandler.SaveUserLogin(handle, None, 1, valid, profile_url, profile_url_rml)

@@ -67,7 +67,7 @@ class Server(object):
 		
 class Player(object):
 	
-	def __init__(self, uuid=0, login='', nickname='', ip='', ipv6='', location='', banned=False ):
+	def __init__(self, uuid=0, login='', nickname='', ip='', ipv6='', location='', banned=False, steam_id=None ):
 		self.uuid = uuid
 		self.login = login
 		self.nickname = nickname
@@ -75,6 +75,7 @@ class Player(object):
 		self.ipv6 =ipv6
 		self.location = location
 		self.banned = banned
+		self.steam_id = steam_id
 		
 		
 #################################
@@ -102,12 +103,12 @@ class UserHandler(object):
 				server.ip, server.ipv6, server.location, server.banned, server.demos_baseurl )
 	
 	def player_fromdb(self, fields):
-		# fields are (uuid, created, updated, ogin, nickname, ip, ipv6, location, banned)
-		return Player( fields[0], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8] )
+		# fields are (uuid, created, updated, ogin, nickname, ip, ipv6, location, banned, steam_id)
+		return Player( fields[0], fields[3], fields[4], fields[5], fields[6], fields[7], fields[8], fields[9] )
 	
 	def player_todb(self, player):
 		return ( player.uuid, player.login, player.nickname, player.ip,
-				player.ipv6, player.location, player.banned )
+				player.ipv6, player.location, player.banned, player.steam_id )
 	
 	'''
 	LoadUserStats
@@ -243,16 +244,17 @@ class UserHandler(object):
 	doesnt yet.. so thats why we need few additional fields to this
 	function call so we can populate new user
 	'''
-	def LoadPlayer(self, login, ip, ipv6):
+	def LoadPlayer(self, login, ip, ipv6, steam_id):
 		fields = self.dbHandler.LoadUser( login, 'client' )
 		if( fields != None ) :
 			player = self.player_fromdb(fields)
 			player.ip = ip
 			player.ipv6 = ipv6
+			player.steam_id = steam_id
 			self.dbHandler.SavePlayer( self.player_todb(player) )
 		else :
 			# TODO: geolocate !
-			player = Player( uuid=0, login=login, nickname='', ip=ip, ipv6=ipv6 )
+			player = Player( uuid=0, login=login, nickname='', ip=ip, ipv6=ipv6, location='', banned=False, steam_id=steam_id )
 			player.uuid = self.dbHandler.SavePlayer( self.player_todb(player) )
 			
 		return player

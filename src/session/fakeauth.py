@@ -37,8 +37,9 @@ class getauth(object):
 									'valid' : '1' } )
 		
 		try :
-			req = urllib2.urlopen( url, data )
-			req.close()
+			opener = urllib2.build_opener()
+			opener.addheaders = [('User-agent', 'Warmama/1.0')]
+			response = opener.open(url, data).read()
 		except:
 			print("getauth: failed to open url %s" % url)
 		

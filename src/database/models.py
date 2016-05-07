@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # WMM imports
 # import wmlib
+import re
 
 ##########################
 
@@ -152,16 +153,18 @@ class table_PlayerStats (TableBase):
 	quits INTEGER,
 	rating DECIMAL(8,2),
 	deviation DECIMAL(8,2),
+	`steam_dirty` TINYINT(1) UNSIGNED DEFAULT 0 NOT NULL,
 	PRIMARY KEY(id),
 	UNIQUE KEY player_gametype(player_id,gametype_id),
-	KEY updated(updated)
+	KEY updated(updated),
+	KEY `steam_dirty_updated` (`steam_dirty`, `updated`)
 	"""
 	table = None
 	
 	def __init__ (self):
 		TableBase.__init__(self)
 		table_PlayerStats.table = self
-		
+
 class table_PlayerAchievements (TableBase):
 	
 	tablename = 'player_achievements'
@@ -384,29 +387,33 @@ class table_Weapons (TableBase):
 	# if its not in the table, create it
 	# and return the new ID
 	def GetCertainID (self, cursor, name):
-		q = "LOCK TABLES %s WRITE" % self.tablename
-		cursor.execute ( q )
-		
-		q = "SELECT id FROM %s WHERE name=%%s LIMIT 1" % self.tablename
-		
-		cursor.execute ( q, (name) )
+		selectq = "SELECT id FROM %s WHERE name=%%s LIMIT 1" % self.tablename
+
+		cursor.execute ( selectq, (name) )
 		if ( cursor.rowcount > 0 ) :
 			r = cursor.fetchone();
 		else :
-			# we have to add this one, try to figure out
-			# known qualified fullnames
-			fullname = ''
-			if ( name in self.weapnames ) :
-				fullname = self.weapnames[name]
+			q = "LOCK TABLES %s WRITE" % self.tablename
+			cursor.execute ( q )
+			
+			cursor.execute ( selectq, (name) )
+			if ( cursor.rowcount > 0 ) :
+				r = cursor.fetchone();
 			else :
-				fullname = name
-			q = "INSERT INTO %s (name,fullname) VALUES(%%s,%%s)" % self.tablename
-			cursor.execute ( q, (name, fullname))
-			cursor.execute ( "SELECT LAST_INSERT_ID()")
-			r = cursor.fetchone()
-		
-		q = "UNLOCK TABLES"
-		cursor.execute ( q )
+				# we have to add this one, try to figure out
+				# known qualified fullnames
+				fullname = ''
+				if ( name in self.weapnames ) :
+					fullname = self.weapnames[name]
+				else :
+					fullname = name
+				q = "INSERT INTO %s (name,fullname) VALUES(%%s,%%s)" % self.tablename
+				cursor.execute ( q, (name, fullname))
+				cursor.execute ( "SELECT LAST_INSERT_ID()")
+				r = cursor.fetchone()
+			
+			q = "UNLOCK TABLES"
+			cursor.execute ( q )
 		
 		if ( r != None ) :
 			return r[0]
@@ -431,35 +438,50 @@ class table_Awards (TableBase):
 	def __init__ (self):
 		TableBase.__init__(self)
 		table_Awards.table = self
-		
-		
+	
+	def GetCleanAwardName(self, name):
+		award_name = name
+		m = re.match(r"^(\^\d+)?(.+)(\s+\(\d+\))", name)
+		if m is not None:
+			award_name = m.group(2)
+		else :
+			m = re.match(r"^(\^\d+)?(.+)", name)
+			if m is not None:
+				award_name = m.group(2)
+		return award_name
+
 	# this returns id for given weapname
 	# if its not in the table, create it
 	# and return the new ID
 	def GetCertainID (self, cursor, name):
-		q = "LOCK TABLES %s WRITE" % self.tablename
-		cursor.execute ( q )
-		
-		q = "SELECT id FROM %s WHERE name=%%s LIMIT 1" % self.tablename
-		
-		cursor.execute ( q, (name) )
+		clean_name = self.GetCleanAwardName(name)
+
+		selectq = "SELECT id FROM %s WHERE name=%%s LIMIT 1" % self.tablename
+
+		cursor.execute ( selectq, (clean_name) )
 		if ( cursor.rowcount > 0 ) :
 			r = cursor.fetchone()
 		else :
-			# not in the table, we have to add this one
-			q = "INSERT INTO %s (name) VALUES(%%s)" % self.tablename
-			cursor.execute ( q, (name) )
-			cursor.execute ( "SELECT LAST_INSERT_ID()")
-			r = cursor.fetchone()
+			q = "LOCK TABLES %s WRITE" % self.tablename
+			cursor.execute ( q )
 		
-		q = "UNLOCK TABLES"
-		cursor.execute ( q )
-		
+			cursor.execute ( selectq, (clean_name) )
+			if ( cursor.rowcount > 0 ) :
+				r = cursor.fetchone()
+			else :
+				# not in the table, we have to add this one
+				q = "INSERT INTO %s (name) VALUES(%%s)" % self.tablename
+				cursor.execute ( q, (clean_name) )
+				cursor.execute ( "SELECT LAST_INSERT_ID()")
+				r = cursor.fetchone()
+			
+			q = "UNLOCK TABLES"
+			cursor.execute ( q )
+
 		if ( r != None ) :
 			return r[0]
 		
 		return 0
-	
 
 # TODO: internal fields for name of gamaward
 # and the required amount of them to achieve
@@ -573,28 +595,34 @@ class table_Gametypes (TableBase):
 	# if its not in the table, create it
 	# and return the new ID
 	def GetCertainID (self, cursor, name):
-		q = "LOCK TABLES %s WRITE" % self.tablename
-		cursor.execute ( q )
+		selectq = "SELECT id FROM %s WHERE name=%%s LIMIT 1" % self.tablename
+		cursor.execute ( selectq, (name) )
 		
-		q = "SELECT id FROM %s WHERE name=%%s LIMIT 1" % self.tablename
-		cursor.execute ( q, (name) )
 		if ( cursor.rowcount > 0 ) :
 			r = cursor.fetchone()
-		else :
-			# we have to add this one, try to figure out
-			# known qualified fullnames
-			fullname = ''
-			if ( name in self.gametypenames ) :
-				fullname = self.gametypenames[name]
+		else :		
+			q = "LOCK TABLES %s WRITE" % self.tablename
+			cursor.execute ( q )
+			
+			cursor.execute ( selectq, (name) )
+			
+			if ( cursor.rowcount > 0 ) :
+				r = cursor.fetchone()
 			else :
-				fullname = name
-			q = "INSERT INTO %s (name,description) VALUES(%%s,%%s)" % self.tablename
-			cursor.execute ( q, (name, fullname))
-			cursor.execute ( "SELECT LAST_INSERT_ID()")
-			r = cursor.fetchone()
-		
-		q = "UNLOCK TABLES"
-		cursor.execute ( q )
+				# we have to add this one, try to figure out
+				# known qualified fullnames
+				fullname = ''
+				if ( name in self.gametypenames ) :
+					fullname = self.gametypenames[name]
+				else :
+					fullname = name
+				q = "INSERT INTO %s (name,description) VALUES(%%s,%%s)" % self.tablename
+				cursor.execute ( q, (name, fullname))
+				cursor.execute ( "SELECT LAST_INSERT_ID()")
+				r = cursor.fetchone()
+			
+			q = "UNLOCK TABLES"
+			cursor.execute ( q )
 		
 		if ( r != None ) :
 			return r[0]
@@ -618,9 +646,11 @@ class table_Players (TableBase):
 	ipv6 VARCHAR(54),
 	location CHAR(2),
 	banned TINYINT(1),
+	steam_id VARCHAR(30) NULL,
 	PRIMARY KEY (id),
 	UNIQUE KEY login(login),
-	KEY location(location)
+	KEY location(location),
+	UNIQUE KEY steam_id(steam_id),
 	"""
 	table = None
 	
@@ -629,12 +659,11 @@ class table_Players (TableBase):
 		table_Players.table = self
 		
 	# returns the UID of the new user
-	def AddNew (self, login, secretkey, nickname, ip, location):
-		
+	def AddNew (self, login, secretkey, nickname, ip, location, steam_id):
 		self.insert ( """
-			(login, secretkey, nickname, ip, location, created, updated)
-			VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
-			""", (login, secretkey, nickname, ip, location) )
+			(login, secretkey, nickname, ip, location, created, updated, steam_id)
+			VALUES (%s, %s, %s, %s, %s, NOW(), NOW(), %s)
+			""", (login, secretkey, nickname, ip, location, steam_id) )
 				
 		self.cursor.execute ( "SELECT LAST_INSERT_ID()" )
 		row = self.cursor.fetchone()
@@ -643,7 +672,38 @@ class table_Players (TableBase):
 			return row[0]
 		
 		return None
-	
+
+	def GetSteamID(self, cursor, id):
+		cursor.execute("SELECT steam_id FROM %s WHERE id=%%s" % self.tablename, (id,))
+		r = cursor.fetchone()
+		if r:
+			return r[0]
+		return None
+
+	def GetDirtySteamPlayers(self, cursor, limit):
+		cmd = "LOCK TABLES %s WRITE" % self.tablename
+		cursor.execute ( cmd )
+
+		cmd = """
+			SELECT id 
+			FROM %s
+			WHERE steam_dirty=1 AND steam_id IS NOT NULL AND steam_id!=0 AND banned=0
+			ORDER BY updated ASC LIMIT %%s
+		    """ % ( self.tablename )
+		cursor.execute ( cmd, (limit,) )
+		r = cursor.fetchall()
+
+		if r is not None and len(r)>0:
+		    r=[i[0] for i in r]
+		    format_strings = ','.join(['%s'] * len(r))
+		    cmd = "UPDATE %s SET steam_dirty=0 WHERE id IN (%s)" % ( self.tablename, format_strings )
+		    cursor.execute(cmd, tuple(r))
+
+		cmd = "UNLOCK TABLES"
+		cursor.execute ( cmd )
+
+		return r
+
 class table_Servers (table_Players):
 	
 	tablename = 'servers'
@@ -660,6 +720,7 @@ class table_Servers (table_Players):
 	location CHAR(2),
 	banned TINYINT(1),
 	demos_baseurl VARCHAR(128) NOT NULL DEFAULT '',
+	email VARCHAR(128) NOT NULL DEFAULT '',
 	PRIMARY KEY (id),
 	UNIQUE KEY login(login),
 	KEY location(location),
@@ -763,7 +824,9 @@ class table_LoginPlayer( TableBase ):
 	ready TINYINT(1),
 	valid TINYINT(1),
 	profile_url VARCHAR(255) DEFAULT NULL,
-	profile_url_rml VARCHAR(255) DEFAULT NULL,	
+	profile_url_rml VARCHAR(255) DEFAULT NULL,
+	steam_id` VARCHAR(30) DEFAULT NULL,
+	steam_ticket VARCHAR(255) DEFAULT NULL,
 	PRIMARY KEY(id)
 	'''
 	table = None
@@ -771,7 +834,55 @@ class table_LoginPlayer( TableBase ):
 	def __init__(self):
 		TableBase.__init__(self)
 		table_LoginPlayer.table = self
+
+class table_SteamGametypeStats(TableBase):
+	tablename = 'steam_gametype_stats'
+	schema = """
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`name` varchar(64) CHARACTER SET utf8 NOT NULL,
+		`gametype_id` int(10) unsigned DEFAULT NULL,
+		`steam_id` varchar(64) CHARACTER SET utf8 NOT NULL,
+		PRIMARY KEY (`id`),
+		UNIQUE KEY `name_gt` (`name`,`gametype_id`)
+	"""
+	table = None
 	
+	def __init__ (self):
+		TableBase.__init__(self)
+		table_SteamGametypeStats.table = self
+
+class table_SteamWeaponStats(TableBase):
+	tablename = 'steam_weapon_stats'
+	schema = """
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`weapon_id` int(11) NOT NULL,
+		`type` enum('usage','accuracy') NOT NULL,
+		`steam_id` varchar(64) CHARACTER SET utf8 NOT NULL,
+		PRIMARY KEY (`id`),
+		UNIQUE KEY `weapon_type` (`weapon_id`,`type`),
+		KEY `weapon_id` (`weapon_id`)
+	"""
+	table = None
+	
+	def __init__ (self):
+		TableBase.__init__(self)
+		table_SteamWeaponStats.table = self
+
+class table_SteamLeaderboardStats(TableBase):
+	tablename = 'steam_leaderboard_stats'
+	schema = """
+		`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+		`steam_stat_id` varchar(64) NOT NULL,
+		`steam_leaderboard_id` int(11) NOT NULL,
+		PRIMARY KEY (`id`),
+		UNIQUE KEY `steam_leaderboard_id` (`steam_leaderboard_id`),
+		UNIQUE KEY `steam_stat_id` (`steam_stat_id`)
+	"""
+	table = None
+	
+	def __init__ (self):
+		TableBase.__init__(self)
+		table_SteamLeaderboardStats.table = self
 ########################################
 
 if __name__ == '__main__' :

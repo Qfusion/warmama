@@ -381,8 +381,8 @@ class MatchHandler(object):
 			self.mm.log( "ERROR: prepareMatch: Missing field in match.%s" % missing )
 			return False
 		
-		m.gameTypeId = self.mm.dbHandler.GetGametypeId( m.gameType )
-		m.mapId = self.mm.dbHandler.GetMapnameId( m.mapName )
+		m.gameTypeId = self.db.GetGametypeId( m.gameType )
+		m.mapId = self.db.GetMapnameId( m.mapName )
 		
 		# Handle RACE specially
 		if( m.raceGame or len( m.raceRuns ) > 0 ) :
