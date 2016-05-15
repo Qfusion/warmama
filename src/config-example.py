@@ -38,10 +38,6 @@ db_engine = 'INNODB'
 db_charset = 'utf8'
 db_debug_print = False
 
-# geolocation
-geoip_use = True
-geoip_path = ''
-
 # URL to send the authentication request
 # getauth_url = 'http://localhost:6000/getauth'	# local to local
 getauth_url = 'http://www-dev.warsow.net:1337/mmauth'	# external to external
