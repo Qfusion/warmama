@@ -188,8 +188,9 @@ class auth :
 		valid = safeint( input.get( 'valid', '0') )
 		profile_url = input.get( 'profile_url', '' ).strip(' \t\n\r')
 		profile_url_rml = input.get( 'profile_url_rml', '' ).strip(' \t\n\r')
+		steam_id = input.get( 'steam_id', '' ).strip(' \t\n\r')
 
-		r = warmama.warmama.ClientAuthenticate(handle, secret, valid, profile_url, profile_url_rml)
+		r = warmama.warmama.ClientAuthenticate(handle, secret, valid, profile_url, profile_url_rml, steam_id)
 		web.header('Content-Type', 'text/plain')
 		return r
 	
