@@ -31,7 +31,7 @@ from warmama import safeint
 
 def getIP():
 	IP = web.ctx.ip
-	if IP == "127.0.0.1" or IP == "::1":
+	if IP in config.proxy_addr:
 		IP = web.ctx.env.get("HTTP_X_FORWARDED_FOR", IP)
 		IP = IP.split(',')[0]
 	return IP

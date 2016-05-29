@@ -28,6 +28,8 @@ report_dir = '/var/log/warmama/reports'
 logfile_name = '/var/log/warmama/warmama.log'
 logfile_append = True	# or False
 
+proxy_addr = ["127.0.0.1", "::1"]
+
 # database configuration
 db_type = 'mysql'
 db_host = 'localhost'
