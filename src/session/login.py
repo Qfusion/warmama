@@ -117,7 +117,7 @@ class ClientLogin(threading.Thread):
 			# TODO: response will be MM_DATA_MISSING | MM_AUTH_SENT | MM_AUTH_SENDING_FAILED
 			# print( "**** CLIENTLOGIN RESPONSE: %s" % response )
 			self.mm.log( "**** CLIENTLOGIN RESPONSE: %s" % response )
-			req.close()
+			opener.close()
 
 		except urllib2.HTTPError as e :
 			# print( "ClientLogin: Failed to fetch %s" % config.getauth_url )
