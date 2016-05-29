@@ -650,7 +650,7 @@ class table_Players (TableBase):
 	PRIMARY KEY (id),
 	UNIQUE KEY login(login),
 	KEY location(location),
-	UNIQUE KEY steam_id(steam_id),
+	UNIQUE KEY steam_id(steam_id)
 	"""
 	table = None
 	
@@ -825,7 +825,7 @@ class table_LoginPlayer( TableBase ):
 	valid TINYINT(1),
 	profile_url VARCHAR(255) DEFAULT NULL,
 	profile_url_rml VARCHAR(255) DEFAULT NULL,
-	steam_id` VARCHAR(30) DEFAULT NULL,
+	steam_id VARCHAR(30) DEFAULT NULL,
 	steam_ticket VARCHAR(255) DEFAULT NULL,
 	PRIMARY KEY(id)
 	'''
