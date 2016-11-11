@@ -29,7 +29,12 @@ from warmama import safeint
 #
 # Helpers
 
-
+def getIP():
+	IP = web.ctx.ip
+	if IP in config.proxy_addr:
+		IP = web.ctx.env.get("HTTP_X_FORWARDED_FOR", IP)
+		IP = IP.split(',')[0]
+	return IP
 
 ###################
 #
@@ -49,7 +54,7 @@ class slogin :
 		hostname = input.get('hostname', '')
 		demos_baseurl = input.get('demos_baseurl', '')
 		
-		r = warmama.warmama.ServerLogin(authkey, web.ctx.ip, port, hostname, demos_baseurl)	
+		r = warmama.warmama.ServerLogin(authkey, getIP(), port, hostname, demos_baseurl)
 		web.header('Content-Type', 'application/json')
 		return r
 	
@@ -61,7 +66,7 @@ class slogout :
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
 		
-		r = warmama.warmama.ServerLogout(ssession, web.ctx.ip)
+		r = warmama.warmama.ServerLogout(ssession, getIP())
 		web.header('Content-Type', 'application/json')
 		return r
 	
@@ -102,7 +107,7 @@ class shb :
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
 		
-		r = warmama.warmama.Heartbeat(ssession, web.ctx.ip, 'server')
+		r = warmama.warmama.Heartbeat(ssession, getIP(), 'server')
 		web.header('Content-Type', 'application/json')
 		return r
 	
@@ -113,7 +118,7 @@ class smr :
 		ssession = safeint( input.get( 'ssession', '0' ) )
 		report = input.get( 'data', '' )
 		
-		r = warmama.warmama.MatchReport(ssession, report, web.ctx.ip)
+		r = warmama.warmama.MatchReport(ssession, report, getIP())
 		web.header('Content-Type', 'application/json')
 		return r
 
@@ -122,7 +127,7 @@ class smuuid :
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
 		
-		r = warmama.warmama.MatchUUID(ssession, web.ctx.ip)
+		r = warmama.warmama.MatchUUID(ssession, getIP())
 		web.header('Content-Type', 'application/json')
 		return r
 
@@ -139,7 +144,7 @@ class clogin :
 		pw = input.get( 'passwd', '' ).strip(' \t\n\r')
 		handle = safeint( input.get( 'handle', '' ) )
 		
-		r = warmama.warmama.ClientLogin(login, pw, handle, web.ctx.ip)
+		r = warmama.warmama.ClientLogin(login, pw, handle, getIP())
 		web.header('Content-Type', 'application/json')
 		return r
 	
@@ -151,7 +156,7 @@ class clogout :
 		input = web.input()
 		csession = safeint( input.get( 'csession', '0' ) )
 		
-		r = warmama.warmama.ClientLogout(csession, web.ctx.ip)
+		r = warmama.warmama.ClientLogout(csession, getIP())
 		web.header('Content-Type', 'application/json')
 		return r
 	
@@ -173,7 +178,7 @@ class chb :
 		input = web.input()
 		csession = safeint( input.get( 'csession', '0' ) )
 		
-		r = warmama.warmama.Heartbeat(csession, web.ctx.ip, 'client')
+		r = warmama.warmama.Heartbeat(csession, getIP(), 'client')
 		web.header('Content-Type', 'application/json')
 		return r
 	
@@ -188,8 +193,9 @@ class auth :
 		valid = safeint( input.get( 'valid', '0') )
 		profile_url = input.get( 'profile_url', '' ).strip(' \t\n\r')
 		profile_url_rml = input.get( 'profile_url_rml', '' ).strip(' \t\n\r')
+		steam_id = input.get( 'steam_id', '' ).strip(' \t\n\r')
 
-		r = warmama.warmama.ClientAuthenticate(handle, secret, valid, profile_url, profile_url_rml)
+		r = warmama.warmama.ClientAuthenticate(handle, secret, valid, profile_url, profile_url_rml, steam_id)
 		web.header('Content-Type', 'text/plain')
 		return r
 	
