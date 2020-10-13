@@ -13,6 +13,8 @@ import config
 import models
 import warmama
 
+import pymysql
+pymysql.install_as_MySQLdb()
 import MySQLdb
 import sys
 import socket

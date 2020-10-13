@@ -14,6 +14,8 @@ import models
 from models import *
 import dbpool
 
+import pymysql
+pymysql.install_as_MySQLdb()
 import MySQLdb
 import MySQLdb.cursors
 

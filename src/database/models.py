@@ -888,6 +888,8 @@ class table_SteamLeaderboardStats(TableBase):
 if __name__ == '__main__' :
 	
 	import config
+	import pymysql
+	pymysql.install_as_MySQLdb()
 	import MySQLdb
 	import sys
 	
