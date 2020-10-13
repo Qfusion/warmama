@@ -75,7 +75,7 @@ if __name__ == '__main__' :
 		print("Invalid count")
 		exit()
 		
-	connection = MySQLdb.connect ( host = "localhost",
+	connection = MySQLdb.connect ( host = config.db_host,
 									user = config.db_user,
 									passwd = config.db_passwd,
 									db = config.db_name )
