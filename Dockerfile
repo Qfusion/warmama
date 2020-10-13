@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --upgrade pip \
     && pip install --upgrade meinheld gunicorn \
+    && pip install --no-cache-dir IPy \
     && pip install --no-cache-dir web.py \
     && pip install --no-cache-dir pymysql \
     && pip install --no-cache-dir future
