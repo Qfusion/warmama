@@ -4,13 +4,17 @@
 Created on 30.3.2011
 @author: hc
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from builtins import range
 import config
-import models
+from . import models
 import warmama
 
 import pymysql
@@ -93,7 +97,7 @@ if __name__ == '__main__' :
 	
 	while( count > 0 ) :
 		
-		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in xrange( 64 ) ]
+		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in range( 64 ) ]
 		digest = ''.join( digest )
 		
 		# now lets see if we have this in database

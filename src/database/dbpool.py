@@ -22,9 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import weakref as _weakref
-import Queue as _Queue
-import thread as _thread
+import queue as _Queue
+import _thread as _thread
 import time as _time
 import atexit as _atexit
 
@@ -52,7 +56,7 @@ def _log(level, message, *args, **kwargs):
   if _log_level >= level:
     if args or kwargs:
       argslist = [repr(arg) for arg in args]
-      argslist.extend("%s=%r" % item for item in kwargs.items())
+      argslist.extend("%s=%r" % item for item in list(kwargs.items()))
       message += "(" + ", ".join(argslist) + ")"
     _log_lock.acquire()
     try:

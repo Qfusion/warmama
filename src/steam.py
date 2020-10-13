@@ -4,11 +4,16 @@
 Created on 17.1.2014
 @author: vic
 """
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from builtins import object
 import config
 import database
 
@@ -17,15 +22,14 @@ import json
 import string
 import errno
 import re
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 import sys
 import traceback
 
 import traceback
 
 import time
-import Queue
+import queue
 import threading
 
 ###################
@@ -104,7 +108,7 @@ class SteamHandler(object):
 		self.api_version = config.steam_web_api_version
 
 		# queued updates for ext parties
-		self.extQueue = Queue.Queue()
+		self.extQueue = queue.Queue()
 
 		# datamining thread for steam
 		t = SteamDatamineThread(self, self.extQueue)
@@ -120,13 +124,13 @@ class SteamHandler(object):
 	def ClientLogin( self, id, ticket ):
 		try :
 			# create the url object
-			data = urllib.urlencode( { 'key' : self.publisher_key,
+			data = urllib.parse.urlencode( { 'key' : self.publisher_key,
 				'appid' : self.appid,
 				'ticket' : ticket.encode('hex')
 			} )
 			
 			url = "%s/ISteamUserAuth/AuthenticateUserTicket/v%s/" % ( self.base_url, self.api_version );
-			req = urllib2.urlopen( "%s?%s" % ( url, data ) )
+			req = urllib.request.urlopen( "%s?%s" % ( url, data ) )
 			resp_text = req.read()
 			
 			# print( "**** AUTHTICKET RESPONSE: %s" % resp_text )
@@ -152,11 +156,11 @@ class SteamHandler(object):
 				return False
 			return True
 
-		except urllib2.HTTPError as e :
+		except urllib.error.HTTPError as e :
 			# print( "Steam::ClientLogin: Failed to fetch %s" % url )
 			self.mm.log( "Steam::ClientLogin: Failed to fetch %s, code: %i" % (url, e.code) )
 			return False
-		except urllib2.URLError as e :
+		except urllib.error.URLError as e :
 			# print( "Steam::ClientLogin: Failed to fetch %s" % url )
 			self.mm.log( "Steam::ClientLoginSteam: Failed to fetch %s, reason: %s" % (url, e.reason) )
 			return False
@@ -164,12 +168,12 @@ class SteamHandler(object):
 	def GetProfile( self, steam_ids ):
 		try : 
 			# create the url object
-			data = urllib.urlencode( { 'key' : self.publisher_key,
+			data = urllib.parse.urlencode( { 'key' : self.publisher_key,
 				'steamids' : steam_ids,
 			} )
 			url = "%s/ISteamUser/GetPlayerSummaries/v%s/" % ( self.base_url, '0002' );
 			
-			req = urllib2.urlopen( "%s?%s" % ( url, data ) )
+			req = urllib.request.urlopen( "%s?%s" % ( url, data ) )
 			resp_text = req.read()
 			
 			req.close()
@@ -189,7 +193,7 @@ class SteamHandler(object):
 			}
 			
 			count = 0
-			for name in stats.keys() :
+			for name in list(stats.keys()) :
 			    key = "name[%i]" % count
 			    urlargs[key] = name
 			    key = "value[%i]" % count
@@ -199,9 +203,9 @@ class SteamHandler(object):
 
 			self.mm.log("%s" % urlargs)
 
-			data = urllib.urlencode( urlargs )
+			data = urllib.parse.urlencode( urlargs )
 			url = "%s/ISteamUserStats/SetUserStatsForGame/v%s/" % ( self.base_url, self.api_version );
-			req = urllib2.urlopen( url, data )
+			req = urllib.request.urlopen( url, data )
 			resp_text = req.read()
 			
 			#print( "**** SetUserStatsForGame RESPONSE: %s" % resp_text )
@@ -219,7 +223,7 @@ class SteamHandler(object):
 			
 	def SubmitClientLeaderboardScores( self, id, stats ):
 		# submit leaderboard scores
-		for name in stats.keys() :
+		for name in list(stats.keys()) :
 			value = stats[name][0]
 			leaderboard_id = stats[name][1]
 			if not leaderboard_id:
@@ -233,9 +237,9 @@ class SteamHandler(object):
 				'scoremethod' : 'ForceUpdate',
 			}
 				
-			data = urllib.urlencode( urlargs )
+			data = urllib.parse.urlencode( urlargs )
 			url = "%s/ISteamLeaderboards/SetLeaderboardScore/v0001/" % ( self.base_url );
-			req = urllib2.urlopen( url, data )
+			req = urllib.request.urlopen( url, data )
 			resp_text = req.read()
 				
 			#print( "**** SetLeaderboardScore RESPONSE: %s" % resp_text )

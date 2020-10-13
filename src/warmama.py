@@ -4,11 +4,18 @@
 Created on 28.3.2011
 @author: hc
 """
+from __future__ import print_function
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import object
 import config
 import database
 import session
@@ -27,8 +34,7 @@ import string
 import os
 import errno
 import re
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 
 import traceback
 
@@ -187,7 +193,7 @@ class Warmama(object):
 	
 	def gen_digest(self, length):
 		my_printable = string.letters + string.digits+ '_-'
-		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in xrange( length ) ]
+		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in range( length ) ]
 		digest = ''.join( digest )
 		return digest
 			
@@ -458,7 +464,7 @@ class Warmama(object):
 				
 			# some very clever python stuff to create the stats string
 			# <gametype> <rating> <gametype> <rating>. ..
-			statsString = ''.join( map( lambda x: '%s %d ' % (x[0], x[1][0]), stats.iteritems() ) )
+			statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(list(stats.items()))] )
 			self.log("Created statstring %s" % statsString )
 			
 			if(_SV_JSON):
@@ -467,7 +473,7 @@ class Warmama(object):
 						'gametype': x[0],
 						'rating': x[1][0],
 						'deviation': x[1][1]
-					} for x in stats.iteritems()
+					} for x in list(stats.items())
 				]
 				return json.dumps({'id':cl.id, 'login':login, 'ratings':_stats})
 
@@ -715,7 +721,7 @@ class Warmama(object):
 				});
 
 				stats = self.userHandler.LoadUserRatings( s.user_id )
-				statsString = ''.join( map( lambda x: '%s %d ' % (x[0], x[1][0]), stats.iteritems() ) )
+				statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(list(stats.items()))] )
 				
 				self.log( "ClientLogin: Created session %d (user %d)" % (s.id, s.user_id) )
 				# TODO: refine the statistics object. Dismiss deviation
@@ -726,7 +732,7 @@ class Warmama(object):
 							'gametype': x[0],
 							'rating': x[1][0],
 							'deviation': x[1][1]
-						} for x in stats.iteritems()
+						} for x in list(stats.items())
 					]
 					self.log(str(_stats))
 					return json.dumps({

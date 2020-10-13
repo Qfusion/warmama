@@ -4,6 +4,7 @@
 Created on 30.3.2011
 @author: hc
 """
+from __future__ import unicode_literals
 
 ###################
 #
@@ -25,6 +26,7 @@ Created on 30.3.2011
 #
 # Classes
 
+from builtins import object
 class Session(object):
 
 	# Servers use this baseclass
@@ -202,7 +204,7 @@ class SessionHandler(object):
 				valid = False
 			elif( len( sessions_copy ) == 1 ) :
 				sessions_copy = sessions_copy[0]
-		elif( isinstance( sessions, (int, long) ) ) :
+		elif( isinstance( sessions, int ) ) :
 			sessions_copy = sessions
 		else :
 			self.mm.log( "GetUUIDs: invalid type of sessions %s" % type(sessions) )
@@ -216,7 +218,7 @@ class SessionHandler(object):
 				book = {}
 				
 		# convert the int type back to list for common handling
-		if( isinstance( sessions, (int, long) ) ) :
+		if( isinstance( sessions, int ) ) :
 			sessions = [ sessions ]
 			
 		# fix the missing sessions into 0 UUID

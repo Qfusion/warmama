@@ -5,11 +5,15 @@ Created on 12.4.2011
 
 @author: hc
 '''
+from __future__ import print_function
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from builtins import str
+from builtins import object
 import web
 import datetime
 
