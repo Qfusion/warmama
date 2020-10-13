@@ -171,7 +171,8 @@ class Warmama(object):
 		self.sessionHandler = session.SessionHandler( self )
 		self.userHandler = session.users.UserHandler( self )
 		self.matchHandler = game.match.MatchHandler( self )
-		self.steamHandler = steam.SteamHandler( self )
+		if( config.steam_web_api_publisher_key ) :
+			self.steamHandler = steam.SteamHandler( self )
 		
 		self.log("Started successfully")
 
