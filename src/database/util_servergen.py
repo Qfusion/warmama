@@ -14,7 +14,7 @@ from __future__ import unicode_literals
 
 from builtins import range
 import config
-from . import models
+from database import models
 import warmama
 
 import pymysql

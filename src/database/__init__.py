@@ -16,9 +16,9 @@ from builtins import str
 from builtins import range
 from builtins import object
 import config
-from . import models
-from .models import *
-from . import dbpool
+from database import models
+from database.models import *
+from database import dbpool
 
 import pymysql
 pymysql.install_as_MySQLdb()

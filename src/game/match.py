@@ -33,7 +33,7 @@ from builtins import range
 from past.utils import old_div
 from builtins import object
 import config
-from . import skills
+from game import skills
 import session.users
 import warmama
 
