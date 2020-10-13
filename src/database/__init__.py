@@ -55,6 +55,7 @@ class DatabaseHandler(object):
 		self.tables = {}
 		
 		self.host = host
+		self.port = port
 		self.user = user
 		self.passwd = passwd
 		self.db = db
