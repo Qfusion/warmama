@@ -9,6 +9,7 @@ Created on 27.3.2011
 #
 # Imports
 
+from builtins import object
 import os
 import web
 import config
@@ -39,13 +40,13 @@ def getIP():
 #
 # Classes
 
-class index :
+class index(object) :
 	def GET(self):
 		return 'Hello World! (GET)'
 	def POST(self):
 		return 'Hello World! (POST)'
 
-class slogin :
+class slogin(object) :
 	def POST(self):
 		input = web.input()
 		port = safeint( input.get( 'port', '0' ) )
@@ -60,7 +61,7 @@ class slogin :
 	def GET(self):
 		return self.POST()
 	
-class slogout :
+class slogout(object) :
 	def POST(self):
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
@@ -72,7 +73,7 @@ class slogout :
 	def GET(self):
 		return self.POST()
 
-class scc :
+class scc(object) :
 	def POST(self) :
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
@@ -87,7 +88,7 @@ class scc :
 	def GET(self):
 		return self.POST()
 	
-class scd :
+class scd(object) :
 	def POST(self):
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
@@ -101,7 +102,7 @@ class scd :
 	def GET(self):
 		return self.POST()
 	
-class shb :
+class shb(object) :
 	def POST(self):
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
@@ -110,7 +111,7 @@ class shb :
 		web.header('Content-Type', 'application/json')
 		return r
 	
-class smr :
+class smr(object) :
 	def POST(self):
 		input = web.input()
 		
@@ -121,7 +122,7 @@ class smr :
 		web.header('Content-Type', 'application/json')
 		return r
 
-class smuuid :
+class smuuid(object) :
 	def POST(self):
 		input = web.input()
 		ssession = safeint( input.get( 'ssession', '0' ) )
@@ -135,7 +136,7 @@ class smuuid :
 # 	data = web.data()
 
 ### client requests
-class clogin :
+class clogin(object) :
 	def POST(self):
 		input = web.input()
 		
@@ -150,7 +151,7 @@ class clogin :
 	def GET(self):
 		return self.POST()
 
-class clogout :
+class clogout(object) :
 	def POST(self):
 		input = web.input()
 		csession = safeint( input.get( 'csession', '0' ) )
@@ -162,7 +163,7 @@ class clogout :
 	def GET(self):
 		return self.POST()
 	
-class ccc :
+class ccc(object) :
 	def POST(self):
 		input = web.input()
 		csession = safeint( input.get( 'csession', '0' ) )
@@ -172,7 +173,7 @@ class ccc :
 		web.header('Content-Type', 'application/json')
 		return r
 
-class chb :
+class chb(object) :
 	def POST(self):
 		input = web.input()
 		csession = safeint( input.get( 'csession', '0' ) )
@@ -183,7 +184,7 @@ class chb :
 	
 #####################
 
-class auth :
+class auth(object) :
 	def POST(self):
 		input = web.input()
 		

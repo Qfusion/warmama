@@ -25,6 +25,7 @@ Created on 30.3.2011
 #
 # Classes
 
+from builtins import object
 class Session(object):
 
 	# Servers use this baseclass

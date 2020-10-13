@@ -11,6 +11,9 @@ from __future__ import absolute_import
 #
 # Imports
 
+from builtins import str
+from builtins import range
+from builtins import object
 import config
 from . import models
 from .models import *
@@ -600,7 +603,7 @@ class DatabaseHandler(object):
 			UPDATE %s SET steam_dirty=1 WHERE id=%%s
 		''' % table_Players.tablename
 		
-		for uuid, fields in stats.iteritems() :
+		for uuid, fields in stats.items() :
 			if( uuid == 0 ) :
 				continue
 			
@@ -752,7 +755,7 @@ class DatabaseHandler(object):
 		_id = self.getid(cursor)
 		
 		# now the rest of the runs
-		for i in xrange( len(times) - 1 ) :
+		for i in range( len(times) - 1 ) :
 			query = '''
 				INSERT INTO %s
 				(created, run_id, sector, time)
@@ -984,7 +987,7 @@ class DatabaseHandler(object):
 		# store all teams
 		winnerTeam = 0
 		if( m.teamGame ) :
-			for team in m.teams.itervalues() :
+			for team in m.teams.values() :
 				# Create the team object to database
 				query = '''
 						INSERT INTO %s
@@ -1256,7 +1259,7 @@ class DatabaseHandler(object):
 # function gets invidual cursor created from the pool
 # which is destroyed automatically upon function exit
 
-class DatabaseWrapper:
+class DatabaseWrapper(object):
 	def __init__(self, wmm, host, port, user, passwd, db, engine=None, charset=None):
 		self.obj = DatabaseHandler(wmm, host, port, user, passwd, db, engine, charset)
 		self.lock = threading.Lock()

@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # WMM imports
 # import wmlib
+from builtins import object
 import re
 
 ##########################

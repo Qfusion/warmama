@@ -7,9 +7,11 @@ Created on 11.4.2011
 '''
 from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import web
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 
 ##########################
 
@@ -32,12 +34,12 @@ class getauth(object):
 		url = input.get( 'url', '' )
 		
 		# create a POST request sending validation
-		data = urllib.urlencode( {  'handle' : handle,
+		data = urllib.parse.urlencode( {  'handle' : handle,
 									'digest' : secret,
 									'valid' : '1' } )
 		
 		try :
-			opener = urllib2.build_opener()
+			opener = urllib.request.build_opener()
 			opener.addheaders = [('User-agent', 'Warmama/1.0')]
 			response = opener.open(url, data).read()
 		except:

@@ -9,13 +9,14 @@ Created on 30.3.2011
 #
 # Imports
 
+from future import standard_library
+standard_library.install_aliases()
 import config
 import database
 import warmama
 
 import threading
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 
 ###################
 #
@@ -98,7 +99,7 @@ class ClientLogin(threading.Thread):
 		
 		try :
 			# create the url object
-			data = urllib.urlencode( { 	'login' : self.login,
+			data = urllib.parse.urlencode( { 	'login' : self.login,
 										'passwd' : self.pw,
 										'handle' : '%d' % self.handle,
 										'digest' : 'something',
@@ -109,7 +110,7 @@ class ClientLogin(threading.Thread):
 			# print("**** CLIENTLOGIN CALLING %s %s" % ( config.getauth_url, data ) )
 			# self.mm.log("**** CLIENTLOGIN CALLING %s %s" % ( config.getauth_url, data ) )
 
-			opener = urllib2.build_opener()
+			opener = urllib.request.build_opener()
 			opener.addheaders = [('User-agent', 'Warmama/1.0')]
 			response = opener.open(config.getauth_url, data).read()
 			
@@ -118,11 +119,11 @@ class ClientLogin(threading.Thread):
 			self.mm.log( "**** CLIENTLOGIN RESPONSE: %s" % response )
 			opener.close()
 
-		except urllib2.HTTPError as e :
+		except urllib.error.HTTPError as e :
 			# print( "ClientLogin: Failed to fetch %s" % config.getauth_url )
 			self.mm.log( "ClientLogin: Failed to fetch %s, code: %i" % (config.getauth_url, e.code) )
 			pass	# this means no user credentials
-		except urllib2.URLError as e :
+		except urllib.error.URLError as e :
 			# print( "ClientLogin: Failed to fetch %s" % config.getauth_url )
 			self.mm.log( "ClientLogin: Failed to fetch %s, reason: %s" % (config.getauth_url, e.reason) )
 			pass	# this means no user credentials
@@ -157,7 +158,7 @@ class ClientLoginSteam(threading.Thread):
 		try :
 			# create the url object
 			url = config.getauth_url;
-			data = urllib.urlencode( { 'login' : self.login,
+			data = urllib.parse.urlencode( { 'login' : self.login,
 										'steam_id' : self.id,
 										'steam_ticket' : self.ticket,
 										'handle' : '%d' % self.handle,
@@ -165,7 +166,7 @@ class ClientLoginSteam(threading.Thread):
 										'url' : config.auth_response_url 
 									} )
 			
-			req = urllib2.urlopen( url, data )
+			req = urllib.request.urlopen( url, data )
 			response = req.read()
 			
 			# TODO: response will be MM_DATA_MISSING | MM_AUTH_SENT | MM_AUTH_SENDING_FAILED
@@ -173,11 +174,11 @@ class ClientLoginSteam(threading.Thread):
 			self.mm.log( "**** CLIENTLOGIN RESPONSE: %s" % response )
 			req.close()
 
-		except urllib2.HTTPError as e :
+		except urllib.error.HTTPError as e :
 			# print( "ClientLogin: Failed to fetch %s" % config.getauth_url )
 			self.mm.log( "ClientLoginSteam: Failed to fetch %s, code: %i" % (url, e.code) )
 			pass	# this means no user credentials
-		except urllib2.URLError as e :
+		except urllib.error.URLError as e :
 			# print( "ClientLogin: Failed to fetch %s" % config.getauth_url )
 			self.mm.log( "ClientLoginSteam: Failed to fetch %s, reason: %s" % (url, e.reason) )
 			pass	# this means no user credentials

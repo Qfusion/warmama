@@ -21,7 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 '''
 from __future__ import print_function
+from __future__ import division
 
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import math
 import datetime
 import operator
@@ -38,7 +42,7 @@ DEVIATION_SCALE = 0.1	# deviation multiply scale (totally arbitrary)
 # default normalizator for skill differences
 DEFAULT_T = 400.0
 # maximum gain one can get from 1 game
-BETA = DEFAULT_T/math.sqrt(2)
+BETA = old_div(DEFAULT_T,math.sqrt(2))
 
 # certainity time period in days
 DEFAULT_PERIOD_DAYS = 30.0
@@ -127,11 +131,11 @@ class NormalDistribution(Distribution):
 				cumnorm /= build
 			else :
 				build = x + 0.65
-				build = x + 4 / build
-				build = x + 3 / build
-				build = x + 2 / build
-				build = x + 1 / build
-				cumnorm = e / build / 2.506628274631
+				build = x + old_div(4, build)
+				build = x + old_div(3, build)
+				build = x + old_div(2, build)
+				build = x + old_div(1, build)
+				cumnorm = old_div(e, build) / 2.506628274631
 		if sign > 0 :
 			cumnorm = 1 - cumnorm
 		
@@ -140,7 +144,7 @@ class NormalDistribution(Distribution):
 	# x should be x / T
 	# returns a value from curve 0-0.4
 	def pdf(self, x):
-		return math.exp( -x **2 / 2 ) / math.sqrt(2*math.pi)
+		return old_div(math.exp( old_div(-x **2, 2) ), math.sqrt(2*math.pi))
 
 # Logistic distribution (Fermi - ELO)
 class LogisticDistribution(Distribution):
@@ -162,7 +166,7 @@ class LogisticDistribution(Distribution):
 	def pdf(self, x):
 		x *= 1.66666666
 		e = math.exp( -x )
-		return e / ( ( 1.0 + e )**2.0 ) # * 1.6
+		return old_div(e, ( ( 1.0 + e )**2.0 )) # * 1.6
 	
 ########################
 
@@ -214,15 +218,15 @@ class CHSkill1( object ) :
 		
 		size = self.numPlayers
 		scale = 1.0 / float(size-1)
-		self.expectedScores = range(size)
+		self.expectedScores = list(range(size))
 		
 		# reduce calculations by storing head-on probabilites
 		# to matrix
-		ematrix = range(size*size)
+		ematrix = list(range(size*size))
 		
 		# generate the expected matrix
-		for i in xrange(size-1):
-			for j in xrange(i+1, size):
+		for i in range(size-1):
+			for j in range(i+1, size):
 				p1 = self.players[i]
 				p2 = self.players[j]
 				
@@ -230,7 +234,7 @@ class CHSkill1( object ) :
 				# ignore the deviation for now
 				# d = p1.deviation + p2.deviation
 				d = 0.0
-				e = dist.cdf( x / (DEFAULT_T + d) )
+				e = dist.cdf( old_div(x, (DEFAULT_T + d)) )
 				ematrix[i*size+j] = e
 				ematrix[j*size+i] = 1.0-e
 				
@@ -238,9 +242,9 @@ class CHSkill1( object ) :
 			
 		# The overall expectation is the average of
 		# probabilities against every other player
-		for i in xrange(size) :
+		for i in range(size) :
 			cumulative = 0.0
-			for j in xrange(size) :
+			for j in range(size) :
 				if( i == j ) :
 					continue
 				
@@ -258,21 +262,21 @@ class CHSkill1( object ) :
 		p.sort( key = lambda x : x.rank, reverse = True )
 		
 		# points are given 0-1, 0 for last and 1 for the winner
-		rawValues = [ (i/float(self.numPlayers-1)) for i in xrange(self.numPlayers) ]
+		rawValues = [ (i/float(self.numPlayers-1)) for i in range(self.numPlayers) ]
 		
 		# scaled values according to ties
-		self.pointsPerRank = [ 0.0 for i in xrange(self.numPlayers) ]
+		self.pointsPerRank = [ 0.0 for i in range(self.numPlayers) ]
 		
 		# tiecounts
-		tiecounts = [0 for i in xrange(self.numPlayers)]
+		tiecounts = [0 for i in range(self.numPlayers)]
 		
-		for i in xrange(self.numPlayers) :
+		for i in range(self.numPlayers) :
 			rank = p[i].rank
 			tiecounts[rank] += 1
 			self.pointsPerRank[rank] += rawValues[i]
 			
 		# normalize the values
-		for i in xrange(self.numPlayers) :
+		for i in range(self.numPlayers) :
 			if ( tiecounts[i] > 1 ) :
 				self.pointsPerRank[i] /= float(tiecounts[i])
 			
@@ -291,7 +295,7 @@ class CHSkill1( object ) :
 		lastScore = ps[0].score/float(ps[0].timePlayed)
 		
 		rank = 0
-		for i in xrange(len(ps)) :
+		for i in range(len(ps)) :
 			score = ps[i].score / float(ps[i].timePlayed)
 			if( score != lastScore ) :
 				lastScore = score
@@ -312,7 +316,7 @@ class CHSkill1( object ) :
 			hours = min( hours, 24.0*DEFAULT_PERIOD_DAYS )
 			
 			# Ca = Ca * (1.0/0.1)^(Ta/(24*30))
-			player.deviation = player.deviation * math.pow( MAX_DEVIATION / MIN_DEVIATION, hours / (24.0*DEFAULT_PERIOD_DAYS) )
+			player.deviation = player.deviation * math.pow( old_div(MAX_DEVIATION, MIN_DEVIATION), old_div(hours, (24.0*DEFAULT_PERIOD_DAYS)) )
 			player.deviation = min( MAX_DEVIATION, max( MIN_DEVIATION, player.deviation ) )
 			
 	# Main entry point
@@ -333,7 +337,7 @@ class CHSkill1( object ) :
 		self.getExpected()
 		
 		# now write our new rankings
-		for i in xrange(self.numPlayers) :
+		for i in range(self.numPlayers) :
 			player = self.players[i]
 			e = self.expectedScores[i]
 			p = self.pointsPerRank[player.rank]
@@ -375,7 +379,7 @@ def CalculateSkills( players, timePlayed ):
 	# Make sure we have a flat array of players
 	if( not isinstance(players, list) ) :
 		if( isinstance(players, dict) ) :
-			cplayers = [i for i in players.itervalues()]
+			cplayers = [i for i in players.values()]
 		else :
 			dprint("    not a dict or list")
 			return False

@@ -11,6 +11,8 @@ from __future__ import print_function
 #
 # Imports
 
+from builtins import str
+from builtins import object
 import web
 import datetime
 

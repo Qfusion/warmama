@@ -20,12 +20,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 from __future__ import absolute_import
+from __future__ import division
 
 ###################
 #
 # Imports
 
 # WMM library
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import config
 from . import skills
 import session.users
@@ -96,7 +101,7 @@ class MatchWeapon(object):
 			if( self.strongHits >= self.strongShots ) :
 				self.strongAcc = 100
 			else :
-				self.strongAcc = min(math.floor( (100.0*self.strongHits) / self.strongShots + 0.5), 99)
+				self.strongAcc = min(math.floor( old_div((100.0*self.strongHits), self.strongShots) + 0.5), 99)
 		else:
 			self.strongAcc = 0
 			
@@ -104,7 +109,7 @@ class MatchWeapon(object):
 			if( self.weakHits >= self.weakShots ) :
 				self.weakAcc = 100
 			else :
-				self.weakAcc = min(math.floor( (100.0*self.weakHits) / self.weakShots + 0.5), 99)
+				self.weakAcc = min(math.floor( old_div((100.0*self.weakHits), self.weakShots) + 0.5), 99)
 		else:
 			self.weakAcc = 0
 		
@@ -323,7 +328,7 @@ class Match(object):
 		if( self.gamedir == None ) : return "gamedir"
 		if( self.demoFilename == None ) : return "demoFilename"
 		
-		for team in self.teams.itervalues() :
+		for team in self.teams.values() :
 			s = team.ValidateFields()
 			if( s != None ) :
 				return "team.%s" % s
@@ -406,7 +411,7 @@ class MatchHandler(object):
 		self.mm.log( str( sids_uuids ) )
 		
 		# FIXME: theres gonna be some zero-uuids if theres anonymous players
-		uuids = [ uuid for uuid in sids_uuids.itervalues() ]
+		uuids = [ uuid for uuid in sids_uuids.values() ]
 		stats = self.mm.userHandler.LoadUserStats( uuids, m.gameTypeId )
 		
 		for player in m.players :
@@ -436,7 +441,7 @@ class MatchHandler(object):
 		# Figure out the winners
 		if( m.teamGame ) :
 			bigScore = -99999999
-			for team in m.teams.itervalues() :
+			for team in m.teams.values() :
 				if( team.score > bigScore ) :
 					bigScore = team.score
 					m.winnerTeam = team.index
@@ -610,7 +615,7 @@ class MatchHandler(object):
 					if( config.alpha_phase or ( sessionId > 0 ) ) :
 						weapons = player.get("weapons")
 						if( weapons ) :
-							for weapname,wdef in weapons.iteritems() :
+							for weapname,wdef in weapons.items() :
 								mweap = MatchWeapon(weapname)
 								# ch : just put as strings, cause they go to db directly
 								# (unless we merge 2 player infos?)
@@ -656,7 +661,7 @@ class MatchHandler(object):
 					timestamp = safeint( run.get( "timestamp" ) )
 					times = run.get( "times" )	# this should be a list of int?
 					# DEBUG
-					for i in xrange( len(times) ) :
+					for i in range( len(times) ) :
 						if( not isinstance( times[i], (int, long) ) ) :
 							self.mm.log("** times is typeof %s" % type( times[i] ) )
 							times[i] = int( times[i] )

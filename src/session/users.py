@@ -8,6 +8,7 @@ Created on 30.3.2011
 ###################
 #
 # Imports
+from builtins import object
 import game.skills as skills
 
 import datetime
@@ -30,7 +31,7 @@ import datetime
 
 ## These are replicas of DB objects
 
-class PlayerStats :
+class PlayerStats(object) :
 	
 	def __init__ (self, uuid=0, dbId=0, wins=0, losses=0, quits=0, rating=skills.DEFAULT_RATING, deviation=skills.DEFAULT_DEVIATION, gametype=''):
 		self.uuid = uuid
