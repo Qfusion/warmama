@@ -502,7 +502,7 @@ class MatchHandler(object):
 	def populateMatch(self, m, report_string):
 		
 		if len( report_string ) > 0:
-			report = json.loads( report_string, "ascii" )
+			report = json.loads( report_string )
 			if report is not None:
 				# TODO: check its structure
 				#       It must be a map containing:
