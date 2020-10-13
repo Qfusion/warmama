@@ -133,7 +133,7 @@ class UserHandler(object):
 			elif( len( uuids_copy ) == 1 ) :
 				uuids_copy = uuids_copy[0]
 				
-		elif( isinstance( uuids, (int, long) ) ) :
+		elif( isinstance( uuids, int ) ) :
 			if( uuids != 0 ) :
 				uuids_copy = uuids
 			else :
@@ -162,7 +162,7 @@ class UserHandler(object):
 		
 		# fix single uuid into list form so we have common way of
 		# dealing both types
-		if( isinstance( uuids, (int, long) ) ) :
+		if( isinstance( uuids, int ) ) :
 			uuids = [ uuids ]
 			
 		for uuid in uuids :

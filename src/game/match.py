@@ -662,7 +662,7 @@ class MatchHandler(object):
 					times = run.get( "times" )	# this should be a list of int?
 					# DEBUG
 					for i in range( len(times) ) :
-						if( not isinstance( times[i], (int, long) ) ) :
+						if( not isinstance( times[i], int ) ) :
 							self.mm.log("** times is typeof %s" % type( times[i] ) )
 							times[i] = int( times[i] )
 							

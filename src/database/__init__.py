@@ -243,7 +243,7 @@ class DatabaseHandler(object):
 				WHERE id in %%s 
 				''' % table_SessionsPlayer.tablename
 			
-		elif( isinstance( sessions, (int, long) ) ) :
+		elif( isinstance( sessions, int ) ) :
 			query = '''
 				SELECT id, user_id
 				FROM %s 
@@ -547,7 +547,7 @@ class DatabaseHandler(object):
 		# do we have a list of uuids or single uuid?
 		if( isinstance( uuids, list ) ) :
 			query += 'WHERE ps.player_id IN %s'
-		elif( isinstance( uuids, (int, long) ) ) :
+		elif( isinstance( uuids, int ) ) :
 			query += 'WHERE ps.player_id=%s'
 				
 		# match gametype or spit out all gametypes?
@@ -642,7 +642,7 @@ class DatabaseHandler(object):
 			''' % { 'mp' : table_MatchPlayers.tablename,
 					'mr' : table_MatchResults.tablename
 					}
-		elif( isinstance( uuids, (int, long) ) ) :
+		elif( isinstance( uuids, int ) ) :
 			query = '''
 			SELECT mp.player_id, mr.utctime
 			FROM %(mp)s as mp, %(mr)s as mr
@@ -866,7 +866,7 @@ class DatabaseHandler(object):
 			"""
 			args.append(players)
 			args.append(mapId)
-		elif(isinstance(players, (int, long))):
+		elif(isinstance(players, int)):
 			query += """
 				select 'player' as record_type, r.player_id, s.sector, min(s.time) as 'time'
 				from race_runs r
