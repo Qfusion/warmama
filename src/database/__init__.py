@@ -911,7 +911,7 @@ class DatabaseHandler(object):
 			args.append(mapId)
 		
 		if(query):
-			cursor.execute(query, values)
+			cursor.execute(query, args)
 			rows = cursor.fetchall()
 		else:
 			rows = []
