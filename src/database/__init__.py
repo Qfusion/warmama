@@ -6,6 +6,7 @@ Created on 30.3.2011
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 ###################
 #
@@ -603,7 +604,7 @@ class DatabaseHandler(object):
 			UPDATE %s SET steam_dirty=1 WHERE id=%%s
 		''' % table_Players.tablename
 		
-		for uuid, fields in stats.items() :
+		for uuid, fields in list(stats.items()) :
 			if( uuid == 0 ) :
 				continue
 			
@@ -987,7 +988,7 @@ class DatabaseHandler(object):
 		# store all teams
 		winnerTeam = 0
 		if( m.teamGame ) :
-			for team in m.teams.values() :
+			for team in list(m.teams.values()) :
 				# Create the team object to database
 				query = '''
 						INSERT INTO %s

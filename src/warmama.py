@@ -5,6 +5,7 @@ Created on 28.3.2011
 @author: hc
 """
 from __future__ import print_function
+from __future__ import unicode_literals
 
 ###################
 #
@@ -463,7 +464,7 @@ class Warmama(object):
 				
 			# some very clever python stuff to create the stats string
 			# <gametype> <rating> <gametype> <rating>. ..
-			statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(stats.items())] )
+			statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(list(stats.items()))] )
 			self.log("Created statstring %s" % statsString )
 			
 			if(_SV_JSON):
@@ -472,7 +473,7 @@ class Warmama(object):
 						'gametype': x[0],
 						'rating': x[1][0],
 						'deviation': x[1][1]
-					} for x in stats.items()
+					} for x in list(stats.items())
 				]
 				return json.dumps({'id':cl.id, 'login':login, 'ratings':_stats})
 
@@ -720,7 +721,7 @@ class Warmama(object):
 				});
 
 				stats = self.userHandler.LoadUserRatings( s.user_id )
-				statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(stats.items())] )
+				statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(list(stats.items()))] )
 				
 				self.log( "ClientLogin: Created session %d (user %d)" % (s.id, s.user_id) )
 				# TODO: refine the statistics object. Dismiss deviation
@@ -731,7 +732,7 @@ class Warmama(object):
 							'gametype': x[0],
 							'rating': x[1][0],
 							'deviation': x[1][1]
-						} for x in stats.items()
+						} for x in list(stats.items())
 					]
 					self.log(str(_stats))
 					return json.dumps({

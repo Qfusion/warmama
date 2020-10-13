@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 
 ###################
 #
@@ -328,7 +329,7 @@ class Match(object):
 		if( self.gamedir == None ) : return "gamedir"
 		if( self.demoFilename == None ) : return "demoFilename"
 		
-		for team in self.teams.values() :
+		for team in list(self.teams.values()) :
 			s = team.ValidateFields()
 			if( s != None ) :
 				return "team.%s" % s
@@ -411,7 +412,7 @@ class MatchHandler(object):
 		self.mm.log( str( sids_uuids ) )
 		
 		# FIXME: theres gonna be some zero-uuids if theres anonymous players
-		uuids = [ uuid for uuid in sids_uuids.values() ]
+		uuids = [ uuid for uuid in list(sids_uuids.values()) ]
 		stats = self.mm.userHandler.LoadUserStats( uuids, m.gameTypeId )
 		
 		for player in m.players :
@@ -441,7 +442,7 @@ class MatchHandler(object):
 		# Figure out the winners
 		if( m.teamGame ) :
 			bigScore = -99999999
-			for team in m.teams.values() :
+			for team in list(m.teams.values()) :
 				if( team.score > bigScore ) :
 					bigScore = team.score
 					m.winnerTeam = team.index
@@ -615,7 +616,7 @@ class MatchHandler(object):
 					if( config.alpha_phase or ( sessionId > 0 ) ) :
 						weapons = player.get("weapons")
 						if( weapons ) :
-							for weapname,wdef in weapons.items() :
+							for weapname,wdef in list(weapons.items()) :
 								mweap = MatchWeapon(weapname)
 								# ch : just put as strings, cause they go to db directly
 								# (unless we merge 2 player infos?)

@@ -4,6 +4,7 @@
 Created on 17.1.2014
 @author: vic
 """
+from __future__ import unicode_literals
 
 ###################
 #

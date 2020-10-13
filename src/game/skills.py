@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 from __future__ import print_function
 from __future__ import division
+from __future__ import unicode_literals
 
 from builtins import range
 from builtins import object
@@ -379,7 +380,7 @@ def CalculateSkills( players, timePlayed ):
 	# Make sure we have a flat array of players
 	if( not isinstance(players, list) ) :
 		if( isinstance(players, dict) ) :
-			cplayers = [i for i in players.values()]
+			cplayers = [i for i in list(players.values())]
 		else :
 			dprint("    not a dict or list")
 			return False
