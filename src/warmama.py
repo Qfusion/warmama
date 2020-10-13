@@ -370,7 +370,7 @@ class Warmama(object):
 			
 			# validate IP (TODO: use ipv4_ipv6 and match up with v4 OR v6)
 			if( ip != s.ip and ipv6 != s.ipv6 ) :
-				self.log( "ServerLogout: IP doesnt match! (%s vs %s)" % ( ip, s.ip, ipv6, s.ipv6 ) )
+				self.log( "ServerLogout: IP doesnt match! (%s vs %s) and (%s vs %s)" % ( ip, s.ip, ipv6, s.ipv6 ) )
 				if(_SV_JSON):
 					return json.dumps({'status':0})
 				return '0'
