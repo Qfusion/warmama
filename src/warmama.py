@@ -165,7 +165,7 @@ class Warmama(object):
 		self.log("Initializing...")
 
 		self.dbHandler = database.DatabaseWrapper( self, 
-		    config.db_host, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
+		    config.db_host, config.db_port, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
 		
 		self.sessionHandler = session.SessionHandler( self )
 		self.userHandler = session.users.UserHandler( self )

@@ -51,7 +51,7 @@ class SteamStatsThread(threading.Thread):
 		self.steamHandler = steamHandler
 		self.mm = steamHandler.mm
 		self.dbHandler = database.DatabaseWrapper(self.mm,
-			config.db_host, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset)
+			config.db_host, config.db_port, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset)
 
 	def run(self):
 		while True:
@@ -79,7 +79,7 @@ class SteamDatamineThread(threading.Thread):
 		self.queue = queue
 		self.mm = steamHandler.mm
 		self.dbHandler = database.DatabaseWrapper(self.mm,
-			config.db_host, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
+			config.db_host, config.db_port, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
 
 	def run(self):
 		while True:

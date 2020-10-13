@@ -33,6 +33,7 @@ proxy_addr = ["127.0.0.1", "::1"]
 # database configuration
 db_type = 'mysql'
 db_host = 'localhost'
+db_port = 3306
 db_name = 'warmama'
 db_user = 'root'
 db_passwd = 'root'

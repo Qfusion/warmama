@@ -77,6 +77,7 @@ if __name__ == '__main__' :
 		exit()
 		
 	connection = MySQLdb.connect ( host = config.db_host,
+									port = config.db_port,
 									user = config.db_user,
 									passwd = config.db_passwd,
 									db = config.db_name )

@@ -48,7 +48,7 @@ import re
 
 class DatabaseHandler(object):
 	
-	def __init__(self, wmm, host, user, passwd, db, engine=None, charset=None):
+	def __init__(self, wmm, host, port, user, passwd, db, engine=None, charset=None):
 		self.wmm = wmm
 
 		self.connection = None
@@ -69,8 +69,8 @@ class DatabaseHandler(object):
 		atexit.register(self.close)
 		
 	def open(self ):
-		connection = MySQLdb.connect( host=self.host, user=self.user, passwd=self.passwd, db=self.db )
-		# connection = dbpool.connect( host=self.host, user=self.user, passwd=self.passwd, db=self.db )
+		connection = MySQLdb.connect( host=self.host, port=self.port, user=self.user, passwd=self.passwd, db=self.db )
+		# connection = dbpool.connect( host=self.host, port=self.port, user=self.user, passwd=self.passwd, db=self.db )
 		connection.autocommit(True)
 		self.connection = connection
 		return self.connection != None
@@ -1255,8 +1255,8 @@ class DatabaseHandler(object):
 # which is destroyed automatically upon function exit
 
 class DatabaseWrapper:
-	def __init__(self, wmm, host, user, passwd, db, engine=None, charset=None):
-		self.obj = DatabaseHandler(wmm, host, user, passwd, db, engine, charset)
+	def __init__(self, wmm, host, port, user, passwd, db, engine=None, charset=None):
+		self.obj = DatabaseHandler(wmm, host, port, user, passwd, db, engine, charset)
 		self.lock = threading.Lock()
 		atexit.register(self._releaselock_)
 
