@@ -1291,7 +1291,7 @@ class DatabaseWrapper(object):
 				  tryNum = 999
 			  except Exception as e:
 				  if tryNum == 0:
-					self.obj.ping()
+					  self.obj.ping()
 				  self.obj.wmm.log('DatabaseWrapper exception (%s) %s' % (name, str(e)))
 			  finally:
 				  tryNum += 1
