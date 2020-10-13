@@ -4,15 +4,17 @@
 Created on 30.3.2011
 @author: hc
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 ###################
 #
 # Imports
 
 import config
-import models
-from models import *
-import dbpool
+from . import models
+from .models import *
+from . import dbpool
 
 import pymysql
 pymysql.install_as_MySQLdb()

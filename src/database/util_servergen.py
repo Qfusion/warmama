@@ -4,13 +4,15 @@
 Created on 30.3.2011
 @author: hc
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 ###################
 #
 # Imports
 
 import config
-import models
+from . import models
 import warmama
 
 import pymysql
