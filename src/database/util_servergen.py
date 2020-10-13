@@ -91,7 +91,7 @@ if __name__ == '__main__' :
 	# authkey's are random character-strings, 64-bit length
 	
 	# URL encoding characters
-	my_printable = string.letters + string.digits + '_-'
+	my_printable = string.ascii_letters + string.digits + '_-'
 	table_servers = models.table_Servers()
 	table_servers.cursor = cursor
 	

@@ -192,7 +192,7 @@ class Warmama(object):
 		return uuid
 	
 	def gen_digest(self, length):
-		my_printable = string.letters + string.digits+ '_-'
+		my_printable = string.ascii_letters + string.digits+ '_-'
 		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in range( length ) ]
 		digest = ''.join( digest )
 		return digest
@@ -247,7 +247,7 @@ class Warmama(object):
 	# authkey's consist of letters, digits and _- (ie URL encoding)
 	def ValidateAuthKey(self, authkey):
 		for a in authkey :
-			if( not( a in string.letters or a in string.digits or a in '_-' ) ) :
+			if( not( a in string.ascii_letters or a in string.digits or a in '_-' ) ) :
 				return False		
 		return True
 
