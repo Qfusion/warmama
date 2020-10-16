@@ -14,6 +14,8 @@ from builtins import object
 import web
 import urllib.request, urllib.parse, urllib.error
 
+import config
+
 ##########################
 
 def safeint( s ):
@@ -52,8 +54,10 @@ class getauth(object):
 
 urls = ( '/getauth', 'getauth' )
 
-app = web.application(urls, globals())
+app = web.application(urls, globals(), autoreload=False)
 
 if __name__ == "__main__":
 	app.run()
-
+elif config.cgi_mode == 'wsgi' :
+	# wsgi
+	application = app.wsgifunc()
