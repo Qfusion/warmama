@@ -564,20 +564,29 @@ class Warmama(object):
 				return '0'
 			
 			# decode report
-			try : report = base64.b64decode( report.encode( 'ascii' ), '-_' )
+			try : report = base64.b64decode( report, altchars='-_' )
 			except TypeError as err:
 				self.log( "MatchReport: base64 FAIL %s" % str(err) )
 				if(_SV_JSON):
 					return json.dumps({'status':0})
 				return '0'
 			
+			# decompress report
 			try : report = zlib.decompress( report )
 			except zlib.error :
 				self.log( "MatchReport: zlib FAIL")
 				if(_SV_JSON):
 					return json.dumps({'status':0})
 				return '0'
-				
+			
+			# decode unicode to ascii string
+			try : report = report.decode(encoding="ascii", errors="strict")
+			except UnicodeDecodeError :
+				self.log( "MatchReport: unicode decode FAIL")
+				if(_SV_JSON):
+					return json.dumps({'status':0})
+				return '0'
+			
 			# WRITE THIS THING TO A FILE
 			if( config.report_dir ) :
 				filename = os.path.join( config.report_dir, '%s.json' % datetime.datetime.now().strftime('%Y-%m-%d-%H%M') )
