@@ -139,7 +139,7 @@ class ClientLoginSteam(threading.Thread):
 		self.id = id
 		self.ticket = ticket
 		self.login = mm.dbHandler.LoadUserLoginBySteamID(id)
-		if self.login is '' :
+		if self.login is None :
 			self.login = mm.dbHandler.GetStubSteamLogin(id)
 		
 		# TODO: add digest
