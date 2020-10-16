@@ -611,6 +611,7 @@ class Warmama(object):
 			# remove sessions_players w/purgable=1 & server=this
 			self.dbHandler.RemovePurgables( ssession )
 			
+			gametype = gametype.decode(encoding="ascii", errors="strict")
 			output = ( '%s ' % (gametype) ).join( [ '%d %d ' % (x[0],x[1]) for x in ratings ] )
 			# do we have some problems with this?
 			self.log( "MatchReport output: %s" % output )
