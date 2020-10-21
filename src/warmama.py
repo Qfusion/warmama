@@ -579,19 +579,11 @@ class Warmama(object):
 					return json.dumps({'status':0})
 				return '0'
 			
-			# decode unicode to ascii string
-			try : report = report.decode(encoding="ascii", errors="strict")
-			except UnicodeDecodeError :
-				self.log( "MatchReport: unicode decode FAIL")
-				if(_SV_JSON):
-					return json.dumps({'status':0})
-				return '0'
-			
 			# WRITE THIS THING TO A FILE
 			if( config.report_dir ) :
 				filename = os.path.join( config.report_dir, '%s.json' % datetime.datetime.now().strftime('%Y-%m-%d-%H%M') )
 				f = open( filename, 'w' )
-				f.write( report )
+				f.write( report.decode(encoding="ascii", errors="strict") )
 				f.close()
 			
 			uuid_retries = 0
