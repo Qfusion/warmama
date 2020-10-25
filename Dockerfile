@@ -15,6 +15,14 @@ RUN pip install --upgrade pip \
     && pip install --no-cache-dir future
 
 COPY ./src /app
+COPY ./cgi.patch /tmp/
+COPY ./debugerror.patch /tmp/
+COPY ./webapi.patch /tmp/
+
+RUN patch /usr/local/lib/python3.8/cgi.py < /tmp/cgi.patch \
+    && patch -R /usr/local/lib/python3.8/site-packages/web/debugerror.py < /tmp/debugerror.patch \
+    && patch -R /usr/local/lib/python3.8/site-packages/web/webapi.py < /tmp/webapi.patch \
+    && rm /tmp/cgi.patch /tmp/debugerror.patch /tmp/webapi.patch
 
 RUN cp -p /app/config-example.py /app/config-real.py
 
