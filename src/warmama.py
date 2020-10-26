@@ -582,8 +582,8 @@ class Warmama(object):
 			# WRITE THIS THING TO A FILE
 			if( config.report_dir ) :
 				filename = os.path.join( config.report_dir, '%s.json' % datetime.datetime.now().strftime('%Y-%m-%d-%H%M') )
-				f = open( filename, 'w' )
-				f.write( report.decode(encoding="utf-8", errors="strict") )
+				f = open( filename, 'wb' )
+				f.write( report )
 				f.close()
 			
 			uuid_retries = 0
