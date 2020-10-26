@@ -583,7 +583,7 @@ class Warmama(object):
 			if( config.report_dir ) :
 				filename = os.path.join( config.report_dir, '%s.json' % datetime.datetime.now().strftime('%Y-%m-%d-%H%M') )
 				f = open( filename, 'w' )
-				f.write( report.decode(encoding="ascii", errors="strict") )
+				f.write( report.decode(encoding="utf-8", errors="strict") )
 				f.close()
 			
 			uuid_retries = 0
@@ -603,7 +603,7 @@ class Warmama(object):
 			# remove sessions_players w/purgable=1 & server=this
 			self.dbHandler.RemovePurgables( ssession )
 			
-			gametype = gametype.decode(encoding="ascii", errors="strict")
+			gametype = gametype.decode(encoding="utf-8", errors="strict")
 			output = ( '%s ' % (gametype) ).join( [ '%d %d ' % (x[0],x[1]) for x in ratings ] )
 			# do we have some problems with this?
 			self.log( "MatchReport output: %s" % output )
@@ -676,7 +676,7 @@ class Warmama(object):
 		_CL_JSON = True
 	
 		try :
-			login = login.encode('ascii', 'ignore')
+			login = login.encode('utf-8', 'ignore')
 			(ip, ipv6) = ipv4_ipv6( ip )
 			
 			self.log("Clientlogin %s %s %s %s" % ( login, handle, ip, ipv6 ) )
@@ -772,7 +772,7 @@ class Warmama(object):
 
 		try :
 			id = int(id)
-			ticket_decoded = base64.urlsafe_b64decode( ticket.encode( 'ascii' ) )
+			ticket_decoded = base64.urlsafe_b64decode( ticket.encode( 'utf-8' ) )
 		except TypeError as err:
 			self.log( "ClientLoginSteam: base64 FAIL %s" % str(err) )
 			return '2 0'

@@ -529,7 +529,7 @@ class MatchHandler(object):
 				# start parsing
 				gameType = match_elem.get("gametype")
 				if( gameType ) :
-					m.gameType = gameType.encode("ascii")
+					m.gameType = gameType.encode("utf-8")
 				m.mapName = match_elem.get("map")
 				m.hostName = match_elem.get("hostname")
 				m.timePlayed = safeint(match_elem.get("timeplayed"))
