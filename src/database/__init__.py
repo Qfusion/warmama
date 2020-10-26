@@ -1,20 +1,27 @@
-#!/usr/bin/env python2.7`
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python3
 
 """
 Created on 30.3.2011
 @author: hc
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from builtins import str
+from builtins import range
+from builtins import object
 import config
-import models
-from models import *
-import dbpool
+from database import models
+from database.models import *
+from database import dbpool
 
+import pymysql
+pymysql.install_as_MySQLdb()
 import MySQLdb
 import MySQLdb.cursors
 
@@ -47,13 +54,14 @@ import re
 
 class DatabaseHandler(object):
 	
-	def __init__(self, wmm, host, user, passwd, db, engine=None, charset=None):
+	def __init__(self, wmm, host, port, user, passwd, db, engine=None, charset=None):
 		self.wmm = wmm
 
 		self.connection = None
 		self.tables = {}
 		
 		self.host = host
+		self.port = port
 		self.user = user
 		self.passwd = passwd
 		self.db = db
@@ -68,8 +76,8 @@ class DatabaseHandler(object):
 		atexit.register(self.close)
 		
 	def open(self ):
-		connection = MySQLdb.connect( host=self.host, user=self.user, passwd=self.passwd, db=self.db )
-		# connection = dbpool.connect( host=self.host, user=self.user, passwd=self.passwd, db=self.db )
+		connection = MySQLdb.connect( host=self.host, port=self.port, user=self.user, passwd=self.passwd, db=self.db )
+		# connection = dbpool.connect( host=self.host, port=self.port, user=self.user, passwd=self.passwd, db=self.db )
 		connection.autocommit(True)
 		self.connection = connection
 		return self.connection != None
@@ -237,7 +245,7 @@ class DatabaseHandler(object):
 				WHERE id in %%s 
 				''' % table_SessionsPlayer.tablename
 			
-		elif( isinstance( sessions, (int, long) ) ) :
+		elif( isinstance( sessions, int ) ) :
 			query = '''
 				SELECT id, user_id
 				FROM %s 
@@ -541,7 +549,7 @@ class DatabaseHandler(object):
 		# do we have a list of uuids or single uuid?
 		if( isinstance( uuids, list ) ) :
 			query += 'WHERE ps.player_id IN %s'
-		elif( isinstance( uuids, (int, long) ) ) :
+		elif( isinstance( uuids, int ) ) :
 			query += 'WHERE ps.player_id=%s'
 				
 		# match gametype or spit out all gametypes?
@@ -597,7 +605,7 @@ class DatabaseHandler(object):
 			UPDATE %s SET steam_dirty=1 WHERE id=%%s
 		''' % table_Players.tablename
 		
-		for uuid, fields in stats.iteritems() :
+		for uuid, fields in list(stats.items()) :
 			if( uuid == 0 ) :
 				continue
 			
@@ -636,7 +644,7 @@ class DatabaseHandler(object):
 			''' % { 'mp' : table_MatchPlayers.tablename,
 					'mr' : table_MatchResults.tablename
 					}
-		elif( isinstance( uuids, (int, long) ) ) :
+		elif( isinstance( uuids, int ) ) :
 			query = '''
 			SELECT mp.player_id, mr.utctime
 			FROM %(mp)s as mp, %(mr)s as mr
@@ -749,7 +757,7 @@ class DatabaseHandler(object):
 		_id = self.getid(cursor)
 		
 		# now the rest of the runs
-		for i in xrange( len(times) - 1 ) :
+		for i in range( len(times) - 1 ) :
 			query = '''
 				INSERT INTO %s
 				(created, run_id, sector, time)
@@ -860,7 +868,7 @@ class DatabaseHandler(object):
 			"""
 			args.append(players)
 			args.append(mapId)
-		elif(isinstance(players, (int, long))):
+		elif(isinstance(players, int)):
 			query += """
 				select 'player' as record_type, r.player_id, s.sector, min(s.time) as 'time'
 				from race_runs r
@@ -903,7 +911,7 @@ class DatabaseHandler(object):
 			args.append(mapId)
 		
 		if(query):
-			cursor.execute(query, values)
+			cursor.execute(query, args)
 			rows = cursor.fetchall()
 		else:
 			rows = []
@@ -981,7 +989,7 @@ class DatabaseHandler(object):
 		# store all teams
 		winnerTeam = 0
 		if( m.teamGame ) :
-			for team in m.teams.itervalues() :
+			for team in list(m.teams.values()) :
 				# Create the team object to database
 				query = '''
 						INSERT INTO %s
@@ -1253,9 +1261,9 @@ class DatabaseHandler(object):
 # function gets invidual cursor created from the pool
 # which is destroyed automatically upon function exit
 
-class DatabaseWrapper:
-	def __init__(self, wmm, host, user, passwd, db, engine=None, charset=None):
-		self.obj = DatabaseHandler(wmm, host, user, passwd, db, engine, charset)
+class DatabaseWrapper(object):
+	def __init__(self, wmm, host, port, user, passwd, db, engine=None, charset=None):
+		self.obj = DatabaseHandler(wmm, host, port, user, passwd, db, engine, charset)
 		self.lock = threading.Lock()
 		atexit.register(self._releaselock_)
 
@@ -1284,7 +1292,7 @@ class DatabaseWrapper:
 				  tryNum = 999
 			  except Exception as e:
 				  if tryNum == 0:
-					self.obj.ping()
+					  self.obj.ping()
 				  self.obj.wmm.log('DatabaseWrapper exception (%s) %s' % (name, str(e)))
 			  finally:
 				  tryNum += 1

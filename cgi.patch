@@ -1,0 +1,14 @@
+--- cgi.py	2020-10-25 15:57:14.376953800 -0500
++++ cgi_fix.py	2020-10-25 16:15:15.002526300 -0500
+@@ -686,7 +686,10 @@
+                 if not data:
+                     self.done = -1
+                     break
+-                self.file.write(data)
++                if self._binary_file:
++                    self.file.write(data)
++                else:
++                    self.file.write(data.decode())
+                 todo = todo - len(data)
+ 
+     def read_lines(self):

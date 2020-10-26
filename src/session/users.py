@@ -1,14 +1,15 @@
-#!/usr/bin/env python2.7
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python3
 
 """
 Created on 30.3.2011
 @author: hc
 """
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
+from builtins import object
 import game.skills as skills
 
 import datetime
@@ -31,7 +32,7 @@ import datetime
 
 ## These are replicas of DB objects
 
-class PlayerStats :
+class PlayerStats(object) :
 	
 	def __init__ (self, uuid=0, dbId=0, wins=0, losses=0, quits=0, rating=skills.DEFAULT_RATING, deviation=skills.DEFAULT_DEVIATION, gametype=''):
 		self.uuid = uuid
@@ -133,7 +134,7 @@ class UserHandler(object):
 			elif( len( uuids_copy ) == 1 ) :
 				uuids_copy = uuids_copy[0]
 				
-		elif( isinstance( uuids, (int, long) ) ) :
+		elif( isinstance( uuids, int ) ) :
 			if( uuids != 0 ) :
 				uuids_copy = uuids
 			else :
@@ -162,7 +163,7 @@ class UserHandler(object):
 		
 		# fix single uuid into list form so we have common way of
 		# dealing both types
-		if( isinstance( uuids, (int, long) ) ) :
+		if( isinstance( uuids, int ) ) :
 			uuids = [ uuids ]
 			
 		for uuid in uuids :

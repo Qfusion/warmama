@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 '''
 Created on 7.2.2011
@@ -19,10 +19,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import unicode_literals
 #########################
 
 # WMM imports
 # import wmlib
+from builtins import object
 import re
 
 ##########################
@@ -888,6 +890,8 @@ class table_SteamLeaderboardStats(TableBase):
 if __name__ == '__main__' :
 	
 	import config
+	import pymysql
+	pymysql.install_as_MySQLdb()
 	import MySQLdb
 	import sys
 	
@@ -895,6 +899,7 @@ if __name__ == '__main__' :
 	charset = config.db_charset
 	
 	connection = MySQLdb.connect ( host = config.db_host,
+									port = config.db_port,
 									user = config.db_user,
 									passwd = config.db_passwd,
 									db = config.db_name )

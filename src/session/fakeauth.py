@@ -1,15 +1,20 @@
-#!/usr/bin/env python2.7
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python3
 
 '''
 Created on 11.4.2011
 
 @author: hc
 '''
+from __future__ import print_function
+from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import web
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+
+import config
 
 ##########################
 
@@ -32,12 +37,12 @@ class getauth(object):
 		url = input.get( 'url', '' )
 		
 		# create a POST request sending validation
-		data = urllib.urlencode( {  'handle' : handle,
+		data = urllib.parse.urlencode( {  'handle' : handle,
 									'digest' : secret,
 									'valid' : '1' } )
 		
 		try :
-			opener = urllib2.build_opener()
+			opener = urllib.request.build_opener()
 			opener.addheaders = [('User-agent', 'Warmama/1.0')]
 			response = opener.open(url, data).read()
 		except:
@@ -49,8 +54,10 @@ class getauth(object):
 
 urls = ( '/getauth', 'getauth' )
 
-app = web.application(urls, globals())
+app = web.application(urls, globals(), autoreload=False)
 
 if __name__ == "__main__":
 	app.run()
-
+elif config.cgi_mode == 'wsgi' :
+	# wsgi
+	application = app.wsgifunc()

@@ -11,11 +11,14 @@ small local testing, wsgi and fcgi process.
 
 ## Requirements
 
-What you need (at least):
-- python 2.x
-- webpy (package-name?)
-- MySQLdb (package-name? mysql python driver anyway)
-- mysql (doh..)
+What you need (if you aren't using Docker):
+- libmysqlclient (default-libmysqlclient-dev)
+- MySQL or MariaDB
+- Python 3.6 or newer w/ the following PyPi packages
+- web.py
+- IPy
+- pymysql
+- future
 
 For fcgi:
 - cgi-fcgi (package?)
@@ -145,3 +148,45 @@ warmama could be run in daemon mode here too, refer to mod_wsgi documentation. (
 it in here), but basic things required here are using WSGIScriptAlias to reference the script by custom path,
 setting the PYTHONPATH environment variable with WSGIPythonPath (this can be done as an option
 in WSGIDaemonProcess directive). 
+
+# Docker
+
+Building this Dockerfile will result in an image that satisfies the dependencies for running Warmama. The resulting image can be used to prepare the database schema, generate authorization keys for game servers, and run a Warmama server. When running the image without specifying a CMD or ENDPOINT, Gunicorn will be used to run a cluster of Meinheld workers running Warmama.
+
+You can adjust the number of workers to help reduce "lag" resulting from multiple game servers communicating with Warmama (which is not asynchronous) simultaneously. By default, this Dockerfile will build an image that runs two workers; that can be adjusted via the ENV variable `WEB_CONCURRENCY` in the Dockerfile. For more information on customizing the Meinheld or Gunicorn config, refer to the README for [the project on which this Dockerfile is based](https://github.com/tiangolo/meinheld-gunicorn-docker).
+
+## Examples:
+
+- Build the image:
+```
+docker build --no-cache -t warmama .
+```
+
+- Prepare the database:
+```
+docker run \
+    --network="host" \
+    -v /path/to/your/config.py:/app/config.py \
+    -it warmama \
+    python database/models.py
+```
+
+- Generate `15` auth keys for servers connecting from `123.456.789.10`:
+```
+docker run \
+    --network="host" \
+    -v /path/to/your/config.py:/app/config.py \
+    -it warmama \
+    python database/util_servergen.py 123.456.789.10 15
+```
+
+- Run Warmama in the background with `4` workers, naming the container `warmama` and saving logs and match reports to a specific directory on the host machine:
+```
+docker run \
+    --network="host" \
+    --name="warmama" \
+    -e "WEB_CONCURRENCY=4" \
+    -v /path/to/your/config.py:/app/config.py \
+    -v /path/for/warmama/logs:/var/log/warmama \
+    -it -d warmama
+```

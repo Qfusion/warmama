@@ -1,15 +1,21 @@
-#!/usr/bin/env python2
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python3
 
 """
 Created on 28.3.2011
 @author: hc
 """
+from __future__ import print_function
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from builtins import object
 import config
 import database
 import session
@@ -28,8 +34,7 @@ import string
 import os
 import errno
 import re
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 
 import traceback
 
@@ -166,12 +171,13 @@ class Warmama(object):
 		self.log("Initializing...")
 
 		self.dbHandler = database.DatabaseWrapper( self, 
-		    config.db_host, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
+		    config.db_host, config.db_port, config.db_user, config.db_passwd, config.db_name, config.db_engine, config.db_charset )
 		
 		self.sessionHandler = session.SessionHandler( self )
 		self.userHandler = session.users.UserHandler( self )
 		self.matchHandler = game.match.MatchHandler( self )
-		self.steamHandler = steam.SteamHandler( self )
+		if( config.steam_web_api_publisher_key ) :
+			self.steamHandler = steam.SteamHandler( self )
 		
 		self.log("Started successfully")
 
@@ -186,8 +192,8 @@ class Warmama(object):
 		return uuid
 	
 	def gen_digest(self, length):
-		my_printable = string.letters + string.digits+ '_-'
-		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in xrange( length ) ]
+		my_printable = string.ascii_letters + string.digits+ '_-'
+		digest = [ my_printable[random.randint(0, len(my_printable)-1)] for x in range( length ) ]
 		digest = ''.join( digest )
 		return digest
 			
@@ -241,7 +247,7 @@ class Warmama(object):
 	# authkey's consist of letters, digits and _- (ie URL encoding)
 	def ValidateAuthKey(self, authkey):
 		for a in authkey :
-			if( not( a in string.letters or a in string.digits or a in '_-' ) ) :
+			if( not( a in string.ascii_letters or a in string.digits or a in '_-' ) ) :
 				return False		
 		return True
 
@@ -364,7 +370,7 @@ class Warmama(object):
 			
 			# validate IP (TODO: use ipv4_ipv6 and match up with v4 OR v6)
 			if( ip != s.ip and ipv6 != s.ipv6 ) :
-				self.log( "ServerLogout: IP doesnt match! (%s vs %s)" % ( ip, s.ip, ipv6, s.ipv6 ) )
+				self.log( "ServerLogout: IP doesnt match! (%s vs %s) and (%s vs %s)" % ( ip, s.ip, ipv6, s.ipv6 ) )
 				if(_SV_JSON):
 					return json.dumps({'status':0})
 				return '0'
@@ -458,7 +464,7 @@ class Warmama(object):
 				
 			# some very clever python stuff to create the stats string
 			# <gametype> <rating> <gametype> <rating>. ..
-			statsString = ''.join( map( lambda x: '%s %d ' % (x[0], x[1][0]), stats.iteritems() ) )
+			statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(list(stats.items()))] )
 			self.log("Created statstring %s" % statsString )
 			
 			if(_SV_JSON):
@@ -467,7 +473,7 @@ class Warmama(object):
 						'gametype': x[0],
 						'rating': x[1][0],
 						'deviation': x[1][1]
-					} for x in stats.iteritems()
+					} for x in list(stats.items())
 				]
 				return json.dumps({'id':cl.id, 'login':login, 'ratings':_stats})
 
@@ -558,24 +564,25 @@ class Warmama(object):
 				return '0'
 			
 			# decode report
-			try : report = base64.b64decode( report.encode( 'ascii' ), '-_' )
+			try : report = base64.b64decode( report, altchars='-_' )
 			except TypeError as err:
 				self.log( "MatchReport: base64 FAIL %s" % str(err) )
 				if(_SV_JSON):
 					return json.dumps({'status':0})
 				return '0'
 			
+			# decompress report
 			try : report = zlib.decompress( report )
 			except zlib.error :
 				self.log( "MatchReport: zlib FAIL")
 				if(_SV_JSON):
 					return json.dumps({'status':0})
 				return '0'
-				
+			
 			# WRITE THIS THING TO A FILE
 			if( config.report_dir ) :
 				filename = os.path.join( config.report_dir, '%s.json' % datetime.datetime.now().strftime('%Y-%m-%d-%H%M') )
-				f = open( filename, 'w' )
+				f = open( filename, 'wb' )
 				f.write( report )
 				f.close()
 			
@@ -596,6 +603,7 @@ class Warmama(object):
 			# remove sessions_players w/purgable=1 & server=this
 			self.dbHandler.RemovePurgables( ssession )
 			
+			gametype = gametype.decode(encoding="utf-8", errors="strict")
 			output = ( '%s ' % (gametype) ).join( [ '%d %d ' % (x[0],x[1]) for x in ratings ] )
 			# do we have some problems with this?
 			self.log( "MatchReport output: %s" % output )
@@ -668,7 +676,7 @@ class Warmama(object):
 		_CL_JSON = True
 	
 		try :
-			login = login.encode('ascii', 'ignore')
+			login = login.encode('utf-8', 'ignore')
 			(ip, ipv6) = ipv4_ipv6( ip )
 			
 			self.log("Clientlogin %s %s %s %s" % ( login, handle, ip, ipv6 ) )
@@ -715,7 +723,7 @@ class Warmama(object):
 				});
 
 				stats = self.userHandler.LoadUserRatings( s.user_id )
-				statsString = ''.join( map( lambda x: '%s %d ' % (x[0], x[1][0]), stats.iteritems() ) )
+				statsString = ''.join( ['%s %d ' % (x[0], x[1][0]) for x in iter(list(stats.items()))] )
 				
 				self.log( "ClientLogin: Created session %d (user %d)" % (s.id, s.user_id) )
 				# TODO: refine the statistics object. Dismiss deviation
@@ -726,7 +734,7 @@ class Warmama(object):
 							'gametype': x[0],
 							'rating': x[1][0],
 							'deviation': x[1][1]
-						} for x in stats.iteritems()
+						} for x in list(stats.items())
 					]
 					self.log(str(_stats))
 					return json.dumps({

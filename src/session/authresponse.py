@@ -1,17 +1,23 @@
-#!/usr/bin/env python2.7
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python3
+
 '''
 Created on 12.4.2011
 
 @author: hc
 '''
+from __future__ import print_function
+from __future__ import unicode_literals
 
 ###################
 #
 # Imports
 
+from builtins import str
+from builtins import object
 import web
 import datetime
+
+import config
 
 
 def safeint( s ):
@@ -49,9 +55,12 @@ class authresponse(object):
 
 urls = ( '/authresponse', 'authresponse' )
 
-app = web.application(urls, globals())
+app = web.application(urls, globals(), autoreload=False)
 
 if __name__ == "__main__":
 	# this is for spawn-fcgi
 	web.wsgi.runwsgi = lambda func, addr=None: web.wsgi.runfcgi(func, addr)
 	app.run()
+elif config.cgi_mode == 'wsgi' :
+	# wsgi
+	application = app.wsgifunc()

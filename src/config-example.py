@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 '''
 Created on 7.2.2011
@@ -19,6 +19,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import unicode_literals
 
 # cgi_mode = 'local'
 cgi_mode = 'wsgi'
@@ -33,6 +34,7 @@ proxy_addr = ["127.0.0.1", "::1"]
 # database configuration
 db_type = 'mysql'
 db_host = 'localhost'
+db_port = 3306
 db_name = 'warmama'
 db_user = 'root'
 db_passwd = 'root'
