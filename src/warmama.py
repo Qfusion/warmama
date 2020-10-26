@@ -772,7 +772,7 @@ class Warmama(object):
 
 		try :
 			id = int(id)
-			ticket_decoded = base64.urlsafe_b64decode( ticket.encode( 'utf-8' ) )
+			ticket_decoded = base64.urlsafe_b64decode( ticket.encode( 'ascii' ) )
 		except TypeError as err:
 			self.log( "ClientLoginSteam: base64 FAIL %s" % str(err) )
 			return '2 0'
